@@ -1,0 +1,27 @@
+[Unit]
+Description=TagOS desktop shell (board, panels, dock)
+Documentation=https://github.com/tagos/tagos
+PartOf=tag-session.target
+After=tag-flow.service
+
+[Service]
+Type=simple
+Environment=QT_QPA_PLATFORM=wayland
+Environment=QT_QUICK_CONTROLS_STYLE=Basic
+Environment=QT_ENABLE_HIGHDPI_SCALING=1
+ExecStart=/usr/bin/tag-shell --ready-file %t/tagos/ready
+Restart=on-failure
+RestartSec=1s
+# The shell owns a Wayland surface but still needs almost nothing from the host.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=tag-session.target

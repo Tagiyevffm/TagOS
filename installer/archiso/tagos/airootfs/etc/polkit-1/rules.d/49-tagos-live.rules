@@ -1,0 +1,20 @@
+# Live media: let the local session perform power actions without a password.
+#
+# On an installed system this file does NOT exist — polkit asks for
+# authentication, which is the correct behaviour for a persistent machine.
+polkit.addRule(function (action, subject) {
+    var allowed = [
+        "org.freedesktop.login1.power-off",
+        "org.freedesktop.login1.reboot",
+        "org.freedesktop.login1.suspend",
+        "org.freedesktop.login1.power-off-multiple-sessions",
+        "org.freedesktop.login1.reboot-multiple-sessions"
+    ];
+
+    if (allowed.indexOf(action.id) !== -1
+            && subject.isInGroup("wheel")
+            && subject.local
+            && subject.active) {
+        return polkit.Result.YES;
+    }
+});

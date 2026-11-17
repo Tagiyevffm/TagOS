@@ -1,0 +1,16 @@
+# Development dependencies for building TagOS on an Arch host.
+cmake
+ninja
+gcc
+pkgconf
+git
+qt6-tools
+qt6-languageserver
+shellcheck
+python
+jq
+qemu-full
+edk2-ovmf
+archiso
+squashfs-tools
+libisoburn

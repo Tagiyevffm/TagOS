@@ -1,0 +1,27 @@
+# Foundation packages: present on every TagOS system (installed image and live).
+# Source of truth for installer/archiso and for tools/build-iso.sh.
+base
+linux
+linux-firmware
+mkinitcpio
+systemd
+systemd-sysusers
+systemd-tmpfiles
+sudo
+dbus
+dracut
+btrfs-progs
+dosfstools
+e2fsprogs
+util-linux
+pacman
+pacman-contrib
+reflector
+archlinux-keyring
+networkmanager
+network-manager-applet
+polkit
+shadow
+nano
+vim
+less

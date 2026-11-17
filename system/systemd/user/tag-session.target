@@ -1,0 +1,8 @@
+[Unit]
+Description=TagOS desktop session (shell + TagOS system services)
+Documentation=https://github.com/tagos/tagos
+Wants=tag-flow.service tag-shell.service
+After=tag-flow.service
+
+[Install]
+WantedBy=default.target

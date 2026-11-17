@@ -1,0 +1,54 @@
+#!/bin/sh
+# tag-session — start a TagOS user session.
+#
+# greetd (or a TTY login) calls this as the session command. Responsibilities for
+# Phase 0 are deliberately small and observable:
+#   1. export a deterministic environment for Wayland/Qt clients,
+#   2. make sure the user D-Bus session and systemd user manager are alive,
+#   3. hand the session over to labwc (the compositor never forks away),
+#   4. bring up TagOS' own user services (tag-flow, tagshell).
+#
+# Everything the compositor or shell needs afterwards is a systemd user unit in
+# /usr/lib/systemd/user, so a crashed shell is restarted by systemd and not by
+# this script.
+set -eu
+
+: "${XDG_CURRENT_DESKTOP:=TagOS}"
+: "${XDG_SESSION_DESKTOP:=TagOS}"
+: "${XDG_SESSION_TYPE:=wayland}"
+: "${QT_QPA_PLATFORM:=wayland}"
+: "${QT_WAYLAND_DISABLE_WINDOWDECORATION:=1}"
+: "${MOZ_ENABLE_WAYLAND:=1}"
+: "${ELECTRON_OZONE_PLATFORM_HINT:=auto}"
+export XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+export QT_QPA_PLATFORM QT_WAYLAND_DISABLE_WINDOWDECORATION MOZ_ENABLE_WAYLAND ELECTRON_OZONE_PLATFORM_HINT
+
+log() {
+    printf 'tag-session: %s\n' "$*" >&2
+}
+
+# A session without a user manager cannot run tag-flow/tagshell as units.
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-update-activation-environment >/dev/null 2>&1; then
+    : # dbus-run-session (below) will provide one
+fi
+
+if [ ! -x "$(command -v labwc 2>/dev/null || true)" ]; then
+    log "labwc is not installed; cannot start the TagOS session"
+    exit 127
+fi
+
+# Publish the session environment to systemd --user and D-Bus activation so that
+# units started later inherit WAYLAND_DISPLAY and friends.
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+    dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP \
+        XDG_SESSION_TYPE XDG_SESSION_DESKTOP QT_QPA_PLATFORM 2>/dev/null || true
+fi
+
+log "starting session: Type=${XDG_SESSION_TYPE} Desktop=${XDG_SESSION_DESKTOP}"
+
+# labwc runs the autostart file from /etc/xdg/labwc/autostart, which is what
+# starts tagos-session.target (tag-flow + tagshell) in Phase 0.
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-run-session >/dev/null 2>&1; then
+    exec dbus-run-session -- labwc "$@"
+fi
+exec labwc "$@"

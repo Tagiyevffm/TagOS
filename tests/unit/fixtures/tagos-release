@@ -1,0 +1,8 @@
+# TagOS image marker (read before /etc/os-release by SystemProbe).
+NAME="TagOS"
+PRETTY_NAME="TagOS Linux"
+ID=tagos
+ID_LIKE=arch
+VERSION_ID=0.1.0
+VERSION_CODENAME=Aurora
+HOME_URL="https://tagos.local/"

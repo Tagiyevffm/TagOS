@@ -1,0 +1,10 @@
+# Live media ships autologin straight into a TagOS session.
+#
+# greetd's `initial_session` logs the live user in without a greeter; the
+# installed system uses system/config/greetd/config.toml (tuigreet) instead.
+[terminal]
+vt = 1
+
+[initial_session]
+command = "/usr/bin/tag-session"
+user = "tagos"

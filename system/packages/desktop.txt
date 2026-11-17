@@ -1,0 +1,39 @@
+# TagOS desktop stack: compositor, Qt runtime, audio, power, shell dependencies.
+# Everything here is an upstream Arch package; TagOS adds configuration and its
+# own applications on top. We do not reimplement NetworkManager/PipeWire/BlueZ.
+wayland
+wayland-protocols
+labwc
+layer-shell-qt
+qt6-base
+qt6-declarative
+qt6-svg
+qt6-wayland
+qt6-5compat
+mesa
+vulkan-icd-loader
+libinput
+xorg-xwayland
+pipewire
+pipewire-pulse
+pipewire-alsa
+wireplumber
+alsa-utils
+bluez
+bluez-utils
+greetd
+greetd-tuigreet
+upower
+power-profiles-daemon
+fonts
+noto-fonts
+noto-fonts-emoji
+ttf-dejavu
+ttf-liberation
+adobe-source-sans-fonts
+inter-font
+xdg-desktop-portal
+xdg-desktop-portal-wlr
+xdg-utils
+foot
+brightnessctl

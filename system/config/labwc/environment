@@ -1,0 +1,17 @@
+# Environment for every Wayland client in a TagOS session.
+#
+# tag-session also exports these (greetd does not read this file), but keeping
+# them here makes the values discoverable and lets `labwc --reconfigure` pick up
+# changes during development.
+XDG_CURRENT_DESKTOP=TagOS
+XDG_SESSION_DESKTOP=TagOS
+XDG_SESSION_TYPE=wayland
+QT_QPA_PLATFORM=wayland
+QT_QUICK_CONTROLS_STYLE=Basic
+QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+MOZ_ENABLE_WAYLAND=1
+ELECTRON_OZONE_PLATFORM_HINT=auto
+GDK_BACKEND=wayland
+SDL_VIDEODRIVER=wayland
+XCURSOR_THEME=Adwaita
+XCURSOR_SIZE=24

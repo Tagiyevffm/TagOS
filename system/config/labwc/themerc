@@ -1,0 +1,26 @@
+# TagOS labwc theme (/usr/share/tagos/labwc/themerc, linked into ~/.config/labwc).
+# Colors mirror desktop/tag-design (Aurora palette).
+border.width: 1
+padding.height: 4
+padding.width: 6
+window.handle.width: 0
+window.clientSideDecoration: 1
+window.button.width: 0
+window.titlebar.height: 34
+window.label.text.justify: center
+window.active.title.bg.color: #1A1512
+window.inactive.title.bg.color: #14100E
+window.active.border.color: #F5931F
+window.inactive.border.color: #2A2320
+window.active.label.text.color: #F5EDE6
+window.inactive.label.text.color: #9A8F88
+window.active.button.unpressed.image.color: #F5931F
+window.inactive.button.unpressed.image.color: #6B605A
+menu.items.bg.color: #17120F
+menu.items.text.color: #F5EDE6
+menu.items.active.bg.color: #F5931F
+menu.items.active.text.color: #14100E
+menu.separator.color: #2A2320
+osd.bg.color: #17120F
+osd.label.text.color: #F5EDE6
+osd.border.color: #F5931F

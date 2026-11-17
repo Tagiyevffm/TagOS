@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_iso:
+        description: "Also build and boot-test the ISO (slow)"
+        type: boolean
+        default: false
+
+env:
+  TAGOS_BUILD_DIR: build/ci
+
+jobs:
+  build-and-test:
+    name: Build, unit tests, QML smoke, lint
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed git cmake ninja gcc pkgconf \
+            qt6-base qt6-declarative qt6-svg qt6-tools qt6-wayland \
+            python shellcheck
+
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B "$TAGOS_BUILD_DIR" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: Build
+        run: cmake --build "$TAGOS_BUILD_DIR"
+
+      - name: Unit + desktop + repository tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_QUICK_BACKEND: software
+          TAGOS_DRY_RUN: "1"
+        run: ctest --test-dir "$TAGOS_BUILD_DIR" --output-on-failure
+
+      - name: Lint (qmllint, shellcheck, repo checks)
+        env:
+          TAGOS_BUILD_DIR: build/ci
+        run: tools/lint.sh
+
+      - name: D-Bus backend compile check
+        run: |
+          # tag-flowd only exists when QtDBus is available; make that explicit.
+          test -x "$TAGOS_BUILD_DIR/bin/tag-flowd"
+          "$TAGOS_BUILD_DIR/bin/tag-flowd" --once --json | tee /tmp/flowd.json
+          python3 -c "import json;d=json.load(open('/tmp/flowd.json'));assert d['schema']==1;assert d['memory']['totalBytes']>0;print('flowd snapshot ok', d['cpuPercent'])"
+
+  iso-boot:
+    name: ISO build + UEFI boot test
+    if: github.event_name == 'workflow_dispatch' && inputs.build_iso
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    steps:
+      - name: Install ISO dependencies
+        run: |
+          pacman -Syu --noconfirm --needed git cmake ninja gcc pkgconf \
+            qt6-base qt6-declarative qt6-svg qt6-tools qt6-wayland \
+            python qemu-full edk2-ovmf archiso squashfs-tools libisoburn sudo
+
+      - uses: actions/checkout@v4
+
+      - name: Build ISO
+        env:
+          TAGOS_BOOT_TIMEOUT: "360"
+        run: tools/build-iso.sh
+
+      - name: Upload serial log and ISO checksum
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tagos-iso
+          path: |
+            out/*.iso.sha256
+            build/vm/boot-test.log

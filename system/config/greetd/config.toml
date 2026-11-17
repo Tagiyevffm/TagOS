@@ -1,0 +1,10 @@
+# greetd — TagOS session greeter
+#
+# The greeter runs as the unprivileged `greeter` user and only knows how to do
+# one thing: start `tag-session`, which hands control to labwc + tag-shell.
+[terminal]
+vt = 1
+
+[default_session]
+command = "tuigreet --time --remember --remember-user-session --cmd tag-session"
+user = "greeter"

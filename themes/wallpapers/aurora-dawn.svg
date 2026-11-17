@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B0908"/>
+      <stop offset="0.35" stop-color="#181110"/>
+      <stop offset="0.62" stop-color="#3A1F14"/>
+      <stop offset="0.78" stop-color="#8A4318"/>
+      <stop offset="0.9" stop-color="#D77A22"/>
+      <stop offset="1" stop-color="#F2A03C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.62" r="0.42">
+      <stop offset="0" stop-color="#FFC46B" stop-opacity="0.85"/>
+      <stop offset="0.45" stop-color="#E8862A" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#E8862A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6B3413"/>
+      <stop offset="0.35" stop-color="#241611"/>
+      <stop offset="1" stop-color="#0B0908"/>
+    </linearGradient>
+    <linearGradient id="ridgeFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A1B17"/>
+      <stop offset="1" stop-color="#150F0D"/>
+    </linearGradient>
+    <linearGradient id="ridgeMid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1C1311"/>
+      <stop offset="1" stop-color="#0E0A09"/>
+    </linearGradient>
+    <linearGradient id="snow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD9A8" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFD9A8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="960" cy="640" rx="780" ry="440" fill="url(#glow)"/>
+
+  <!-- sun -->
+  <circle cx="960" cy="648" r="112" fill="#FFB65C" opacity="0.92"/>
+  <circle cx="960" cy="648" r="148" fill="none" stroke="#FFB65C" stroke-width="2" opacity="0.5"/>
+  <circle cx="960" cy="648" r="194" fill="none" stroke="#FFB65C" stroke-width="1.2" opacity="0.28"/>
+
+  <!-- far ridge -->
+  <path d="M0 792 150 700 260 742 380 648 470 700 610 604 700 664 820 596 940 668 1080 604 1180 690 1300 626 1420 704 1540 648 1660 720 1780 664 1920 740V880H0Z" fill="url(#ridgeFar)"/>
+  <!-- mid ridge -->
+  <path d="M0 872 120 812 230 850 340 790 450 842 560 780 690 846 800 792 930 862 1050 800 1180 858 1300 806 1430 866 1560 812 1690 870 1810 826 1920 872V960H0Z" fill="url(#ridgeMid)"/>
+  <!-- snow glints -->
+  <path d="M380 648 420 676 400 690 360 668Z" fill="url(#snow)"/>
+  <path d="M610 604 660 640 630 656 590 626Z" fill="url(#snow)"/>
+  <path d="M820 596 866 630 840 646 800 618Z" fill="url(#snow)"/>
+  <path d="M1080 604 1124 636 1098 652 1062 626Z" fill="url(#snow)"/>
+  <path d="M1300 626 1346 660 1320 676 1280 648Z" fill="url(#snow)"/>
+
+  <!-- water -->
+  <rect y="960" width="1920" height="120" fill="url(#water)"/>
+  <g opacity="0.5">
+    <rect x="700" y="980" width="520" height="3" rx="1.5" fill="#FFB65C" opacity="0.55"/>
+    <rect x="760" y="1000" width="400" height="2" rx="1" fill="#FFB65C" opacity="0.4"/>
+    <rect x="830" y="1020" width="260" height="2" rx="1" fill="#FFB65C" opacity="0.28"/>
+    <rect x="540" y="1040" width="840" height="1.6" rx="0.8" fill="#FFB65C" opacity="0.18"/>
+  </g>
+
+  <!-- vignette -->
+  <radialGradient id="vig" cx="0.5" cy="0.5" r="0.75">
+    <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+    <stop offset="1" stop-color="#000000" stop-opacity="0.55"/>
+  </radialGradient>
+  <rect width="1920" height="1080" fill="url(#vig)"/>
+</svg>

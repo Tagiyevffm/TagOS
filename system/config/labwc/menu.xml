@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!-- Right-click / Super+Tab menu on the TagOS desktop. -->
+<openbox_menu>
+  <menu id="root-menu" label="TagOS">
+    <item label="Terminal"><action name="Execute" command="foot" /></item>
+    <item label="System Monitor"><action name="Execute" command="tag-monitor" /></item>
+    <separator />
+    <item label="Settings"><action name="Execute" command="tag-settings" /></item>
+    <item label="TagOS Hakkında"><action name="Execute" command="tag-about" /></item>
+    <separator />
+    <item label="Yeniden Başlat"><action name="Execute" command="systemctl reboot" /></item>
+    <item label="Kapat"><action name="Execute" command="systemctl poweroff" /></item>
+  </menu>
+</openbox_menu>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TagOS TagFlow — system metrics contract.
+
+  This file is the canonical definition of what tag-flowd serves on the session
+  bus. It is deliberately small for Phase 0: one atomic snapshot plus a handful
+  of typed properties that lightweight clients can bind to.
+
+  Rules:
+    * Adding keys/properties is a compatible change (clients ignore unknown ones).
+    * Removing or retyping a member requires a new interface version
+      (org.tagos.Flow2) and a deprecation window.
+-->
+<node>
+  <interface name="org.tagos.Flow1">
+    <annotation name="org.freedesktop.DBus.Description" value="TagOS system metrics service"/>
+
+    <method name="Snapshot">
+      <annotation name="org.freedesktop.DBus.Description"
+                  value="One atomic reading of CPU, memory, disk, load and identity."/>
+      <arg name="snapshot" type="a{sv}" direction="out">
+        <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      </arg>
+    </method>
+
+    <method name="Ping">
+      <arg name="alive" type="b" direction="out"/>
+    </method>
+
+    <method name="Version">
+      <arg name="version" type="s" direction="out"/>
+    </method>
+
+    <property name="CpuPercent" type="d" access="read"/>
+    <property name="MemoryUsedPercent" type="d" access="read"/>
+    <property name="DiskUsedPercent" type="d" access="read"/>
+    <property name="UptimeSeconds" type="x" access="read"/>
+
+    <signal name="SnapshotChanged">
+      <arg name="snapshot" type="a{sv}"/>
+    </signal>
+  </interface>
+</node>
