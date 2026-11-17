@@ -27,11 +27,6 @@ log() {
     printf 'tag-session: %s\n' "$*" >&2
 }
 
-# A session without a user manager cannot run tag-flow/tagshell as units.
-if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-update-activation-environment >/dev/null 2>&1; then
-    : # dbus-run-session (below) will provide one
-fi
-
 if [ ! -x "$(command -v labwc 2>/dev/null || true)" ]; then
     log "labwc is not installed; cannot start the TagOS session"
     exit 127
