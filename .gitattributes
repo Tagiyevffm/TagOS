@@ -1,0 +1,12 @@
+# TagOS targets Linux: every text file is LF in the repository and in checkouts,
+# even on Windows developer machines.
+* text=auto eol=lf
+
+*.png binary
+*.qcow2 binary
+*.iso binary
+
+*.sh text eol=lf
+core/tag-session/tag-session text eol=lf
+system/scripts/tagos-boot-marker text eol=lf
+installer/archiso/tagos/profiledef.sh text eol=lf
