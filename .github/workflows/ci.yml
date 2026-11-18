@@ -40,6 +40,30 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DTAGOS_SYSCONF_DIR=/etc
 
+      - name: Validate the package lists
+        run: |
+          # pacstrap aborted the first ISO build on three names that are not
+          # packages (systemd-sysusers/systemd-tmpfiles are binaries, "fonts"
+          # does not exist). pacman is the authority; check before building.
+          pacman -Sy --noconfirm >/dev/null
+          missing=0
+          for list in system/packages/*.txt; do
+            while IFS= read -r pkg; do
+              case "$pkg" in ''|'#'*) continue ;; esac
+              pkg="${pkg%%#*}"; pkg="$(printf '%s' "$pkg" | tr -d '[:space:]')"
+              [ -z "$pkg" ] && continue
+              if ! pacman -Si "$pkg" >/dev/null 2>&1; then
+                echo "MISSING PACKAGE: $pkg (from $list)"
+                missing=$((missing + 1))
+              fi
+            done < "$list"
+          done
+          if [ "$missing" -gt 0 ]; then
+            echo "$missing package name(s) do not exist in the Arch repositories"
+            exit 1
+          fi
+          echo "package lists validated"
+
       - name: Build
         run: cmake --build "$TAGOS_BUILD_DIR" --parallel "$(nproc)"
 
@@ -148,13 +172,13 @@ jobs:
           bsdtar -tf "$pkg" > /tmp/pkg-files.txt
           for required in \
               usr/bin/tag-shell usr/bin/tag-session \
-              usr/lib/qml/TagOS/Shell/qmldir
-            usr/lib/qml/TagOS/Design/qmldir
-            usr/share/wayland-sessions/tagos.desktop \
+              usr/lib/qml/TagOS/Shell/qmldir \
+              usr/lib/qml/TagOS/Design/qmldir \
+              usr/share/wayland-sessions/tagos.desktop \
               usr/share/icons/hicolor/scalable/apps/tag-files.svg \
               usr/lib/systemd/user/tag-shell.service \
               usr/lib/systemd/user/tag-flow.service \
-              etc/xdg/labwc/autostart etc/greetd/config.toml; do
+              etc/xdg/labwc/autostart etc/greetd/config.toml etc/xdg/mimeapps.list; do
             grep -qx "$required" /tmp/pkg-files.txt || { echo "MISSING $required"; exit 1; }
           done
           bsdtar -xOf "$pkg" .PKGINFO | grep -E '^depend' | head -20

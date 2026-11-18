@@ -16,7 +16,6 @@ dosfstools
 dracut
 e2fsprogs
 firefox
-fonts
 foot
 gammastep
 glib2
@@ -55,8 +54,6 @@ reflector
 shadow
 sudo
 systemd
-systemd-sysusers
-systemd-tmpfiles
 ttf-dejavu
 ttf-liberation
 upower
@@ -67,6 +64,7 @@ wayland
 wayland-protocols
 wireplumber
 xdg-desktop-portal
+xdg-desktop-portal-gtk
 xdg-desktop-portal-wlr
 xdg-utils
 xorg-xwayland

@@ -25,7 +25,6 @@ greetd
 greetd-tuigreet
 upower
 power-profiles-daemon
-fonts
 noto-fonts
 noto-fonts-emoji
 ttf-dejavu
@@ -34,6 +33,7 @@ adobe-source-sans-fonts
 inter-font
 xdg-desktop-portal
 xdg-desktop-portal-wlr
+xdg-desktop-portal-gtk
 xdg-utils
 firefox
 foot
