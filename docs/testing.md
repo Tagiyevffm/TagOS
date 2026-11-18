@@ -16,6 +16,7 @@ CI. Nothing is a screenshot-only claim: a test either passes or the build fails.
 | `tst_settings_store` | unit | defaults, persistence, validation, clamping, recents/pins, corrupt-file fallback, atomic save |
 | `tst_desktop_entry` | unit | `.desktop` parsing, field-code expansion, quoting, locale keys |
 | `tst_control_parsers` | unit | `nmcli`, `wpctl`, `bluetoothctl`, `upower`, `brightnessctl`, `powerprofilesctl`, `rfkill` output parsing |
+| `tst_trash` | unit | FreeDesktop Trash: `.trashinfo` encoding, collision suffixes, restore without overwrite, empty, symlinks preserved (POSIX) |
 | `tst_filesystem` | unit | directory model, sorting, hidden files, copy/move/rename, recursive delete, search, previews |
 | `tst_monitors` | unit | `/proc`-based process CPU deltas, network totals, thermal scaling |
 | `desktop-shell-smoke` | QML smoke | loads the whole shell offscreen; fails on any QML runtime error |
@@ -39,7 +40,7 @@ ctest --test-dir build --output-on-failure
 ```
 
 On a Windows development host use MSYS2/UCRT64 (`C:\msys64\ucrt64\bin` on
-`PATH`) and `build/win`; the same 13 tests run, minus the boot test.
+`PATH`) and `build/win`; the same 14 tests run, minus the boot test.
 
 `tools/lint.sh` adds `qmllint` over every QML file, a hex-colour check (colours
 may only appear in `Theme.qml`) and a trailing-whitespace check.

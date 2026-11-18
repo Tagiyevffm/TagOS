@@ -163,3 +163,11 @@ setting can never render an unusable desktop.
   disabled and says why — there are no decorative switches.
 * TagTerminal, the store, updates and snapshots are later phases. The launcher
   only lists applications that actually exist on the system.
+
+## Linux integration audit
+
+`docs/ARCH_LINUX_MIGRATION.md` records the Arch Linux audit: which modules were
+already Linux-native, which host assumptions were removed (trash moved from
+`gio` to a native FreeDesktop implementation; labwc/greetd configuration moved
+from `/usr/share/tagos` to `/etc`), the session entry and icon install rules, the
+package layout and the gap list with its phase.

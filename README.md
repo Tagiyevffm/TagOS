@@ -141,6 +141,8 @@ docs/             architecture, roadmap, phase 0, ADRs
 ## Documentation
 
 - [Architecture](docs/architecture.md) — layers, contracts, boot flow, security
+- [Arch Linux migration](docs/ARCH_LINUX_MIGRATION.md) — module audit, environment decision, gaps, Phase B–F plan
+- [Packaging](packaging/README.md) — PKGBUILD, installed layout, dependencies
 - [Phase 0](docs/phase-0.md) — acceptance criteria and verification commands
 - [Roadmap](docs/roadmap.md) — phases 1–7
 - [Modules](docs/modules.md) — module table, interfaces, tests

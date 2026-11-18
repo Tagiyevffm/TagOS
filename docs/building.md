@@ -13,10 +13,34 @@ sudo pacman -S --needed git cmake ninja gcc pkgconf \
 ### Build and test
 
 ```bash
-tools/build.sh                       # configure + build + ctest  → build/dev
-tools/build.sh --type Debug          # debug build
-tools/build.sh --clean --no-tests    # clean rebuild, skip tests
+tools/build-arch.sh                  # configure + build + ctest  → build/arch
+tools/build-arch.sh --deps           # install the build dependencies first
+tools/build-arch.sh --clean          # clean rebuild
+tools/build-arch.sh --install /tmp/stage   # DESTDIR staging install (layout check)
+tools/test-linux.sh                  # Linux test runner: ctest, smokes, /proc, lint
+tools/build.sh                       # portable fallback (build/dev)
 tools/lint.sh                        # qmllint + shellcheck + repo checks
+```
+
+`tools/build-arch.sh` and `tools/test-linux.sh` refuse to run on anything but
+Linux, because a green Windows run says nothing about Wayland, D-Bus or `/proc`.
+
+### Package
+
+```bash
+tools/package-arch.sh                # Arch package → out/pkg/*.pkg.tar.zst
+```
+
+See [packaging/README.md](../packaging/README.md) for the installed layout.
+
+### Installation layout
+
+`cmake --install` follows the Arch layout: binaries in `/usr/bin`, QML modules in
+`/usr/lib/qml/TagOS`, user units in `/usr/lib/systemd/user`, configuration in
+`/etc` (`TAGOS_SYSCONF_DIR`, default `/etc`). Always stage with `DESTDIR`:
+
+```bash
+DESTDIR=out/stage cmake --install build/arch --prefix /usr
 ```
 
 ### Run the shell on your current session
@@ -86,10 +110,17 @@ archiso, QEMU boot verification.
 
 `.github/workflows/ci.yml` runs:
 
-* **build** — Arch container: configure, build, `ctest`, `tools/lint.sh`;
-* **added-value checks** — repository checks and QML smoke run in the same job;
-* **iso** (manual/dispatch) — build the ISO and boot it headless with
+* **build-and-test** — Arch container: configure with `/usr` + `/etc`, build,
+  `ctest`, `tools/lint.sh`, `tag-flowd` on a real session bus,
+  `tools/test-linux.sh`, and a `DESTDIR` install-tree assertion;
+* **package-arch** — unprivileged `makepkg`, then the package payload is unpacked
+  and checked for the session entry, units, icons and `/etc` configuration;
+* **iso-boot** (manual dispatch) — build the ISO and boot it headless with
   `tests/integration/boot-test.sh`, uploading the serial log on failure.
+
+This is the only authoritative Linux signal available: the development machine
+used for this phase has no working Linux runtime (see
+[ARCH_LINUX_MIGRATION.md](ARCH_LINUX_MIGRATION.md)).
 
 ## Troubleshooting
 
