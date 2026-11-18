@@ -150,6 +150,9 @@ def check_cmake_paths() -> None:
             continue
         text = cmake.read_text(encoding="utf-8", errors="replace")
         for block in CMAKE_INSTALL_RE.findall(text):
+            # Drop keywords together with their argument: COMPONENT Runtime and
+            # DESTINATION <dir> are not source paths.
+            block = re.sub(r"(?:COMPONENT|DESTINATION|TYPE|RENAME|PERMISSIONS)[ 	]+[^\s)]+", " ", block)
             for token in block.split():
                 token = token.strip('"')
                 if not token or token.startswith(("$", "DESTINATION", "COMPONENT", "TYPE",
