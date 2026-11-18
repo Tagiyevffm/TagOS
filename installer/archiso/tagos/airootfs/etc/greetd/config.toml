@@ -1,9 +1,15 @@
-# Live media ships autologin straight into a TagOS session.
+# Live media: greetd starts the TagOS session directly.
 #
-# greetd's `initial_session` logs the live user in without a greeter; the
-# installed system uses system/config/greetd/config.toml (tuigreet) instead.
+# greetd requires a [default_session] block even when [initial_session] is set -
+# without it the daemon exits immediately with "no default_session specified",
+# which is what kept the live image on a text login. tuigreet is the fallback if
+# the automatic session ever fails to start.
 [terminal]
 vt = 1
+
+[default_session]
+command = "tuigreet --time --remember --cmd /usr/bin/tag-session"
+user = "greeter"
 
 [initial_session]
 command = "/usr/bin/tag-session"

@@ -13,7 +13,9 @@ RemainAfterExit=yes
 ExecStart=/bin/sh /usr/lib/tagos/tagos-boot-marker
 StandardOutput=journal+console
 StandardError=journal+console
-TimeoutStartSec=180
+# Must exceed TAGOS_BOOT_TIMEOUT, otherwise systemd kills the marker in the
+# middle of its wait and reports a timeout instead of the real result.
+TimeoutStartSec=620
 
 [Install]
 WantedBy=multi-user.target
