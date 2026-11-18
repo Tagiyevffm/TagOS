@@ -12,5 +12,7 @@ command = "tuigreet --time --remember --cmd /usr/bin/tag-session"
 user = "greeter"
 
 [initial_session]
-command = "/usr/bin/tag-session"
+# tee keeps the session log where the diagnostic unit can read it: greetd swallows
+# the child's stderr, which is why a failing session left no trace on the console.
+command = "/bin/sh -c '/usr/bin/tag-session 2>&1 | tee /tmp/tagos-session.log' cli
 user = "tagos"
