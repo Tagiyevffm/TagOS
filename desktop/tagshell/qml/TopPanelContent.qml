@@ -28,7 +28,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.dark ? "#D90B0D11" : "#F2FFFFFF"
+        color: Theme.surfacePanel
 
         Rectangle {
             anchors.left: parent.left

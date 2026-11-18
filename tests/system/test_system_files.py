@@ -408,6 +408,20 @@ def check_app_icons() -> None:
             error(f"{entry.relative_to(ROOT)}: Exec path must stay under /usr/bin ({command!r})")
 
 
+def check_design_tokens() -> None:
+    """A colour literal outside Theme.qml is a design-system bug."""
+    theme = ROOT / "desktop/tag-design/qml/Theme.qml"
+    if not theme.exists():
+        error("missing desktop/tag-design/qml/Theme.qml")
+        return
+    pattern = re.compile(r'"#[0-9A-Fa-f]{3,8}"')
+    for qml in list(ROOT.glob("desktop/**/*.qml")) + list(ROOT.glob("apps/**/*.qml")):
+        if qml == theme:
+            continue
+        for literal in pattern.findall(qml.read_text(encoding="utf-8")):
+            error(f"{qml.relative_to(ROOT)}: colour literal {literal} must live in Theme.qml")
+
+
 def check_docs() -> None:
     for name in ("README.md", "docs/architecture.md", "docs/phase-0.md"):
         if not (ROOT / name).exists():
@@ -425,6 +439,7 @@ def main() -> int:
     check_packaging()
     check_tool_scripts()
     check_app_icons()
+    check_design_tokens()
     check_docs()
 
     if ERRORS:

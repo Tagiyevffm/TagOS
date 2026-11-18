@@ -45,6 +45,15 @@ QtObject {
     readonly property color danger: dark ? "#F2555A" : "#C0292E"
     readonly property color info: dark ? "#5B9DFF" : "#1D4ED8"
 
+    // --- translucent surfaces (panel, dock, floating chrome) ---------------
+    // Kept here so no QML file outside this one spells a colour literal.
+    readonly property color surfacePanel: dark ? "#D90B0D11" : "#F2FFFFFF"
+    readonly property color surfaceDock: dark ? "#E6111318" : "#F7FFFFFF"
+    readonly property color dangerHover: dark ? "#F06A6E" : "#A8232A"
+    readonly property color dangerOnText: dark ? "#1A0D0D" : "#FFFFFF"
+    /// Bottom gradient applied over the wallpaper so the clock stays legible.
+    readonly property color wallpaperShade: dark ? "#B3090A0C" : "#66FFFFFF"
+
     // --- identity ---------------------------------------------------------
     readonly property string version: "0.2.0"
     readonly property string codename: "Aurora"

@@ -65,7 +65,7 @@ Item {
         width: row.implicitWidth + Spacing.lg * 2
         height: root.buttonSize + Spacing.sm * 2
         radius: Radius.large
-        color: Theme.dark ? "#E6111318" : "#F7FFFFFF"
+        color: Theme.surfaceDock
         border.width: 1
         border.color: Theme.border
 

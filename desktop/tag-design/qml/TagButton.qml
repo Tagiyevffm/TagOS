@@ -71,7 +71,7 @@ Item {
         case TagButton.Tonal:
             return area.containsMouse ? Theme.surfaceHover : Theme.surfaceAlt;
         case TagButton.Danger:
-            return area.containsMouse ? "#F06A6E" : Theme.danger;
+            return area.containsMouse ? Theme.dangerHover : Theme.danger;
         case TagButton.Ghost:
         default:
             return area.containsMouse ? Theme.surfaceAlt : "transparent";
@@ -83,7 +83,7 @@ Item {
         case TagButton.Primary:
             return Theme.accentInk;
         case TagButton.Danger:
-            return "#1A0D0D";
+            return Theme.dangerOnText;
         case TagButton.Tonal:
             return Theme.text;
         case TagButton.Ghost:

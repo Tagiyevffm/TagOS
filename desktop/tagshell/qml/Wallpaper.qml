@@ -27,7 +27,7 @@ Item {
                 position: 0.55
                 color: Qt.rgba(0, 0, 0, Theme.dark ? 0.10 : 0.04)
             }
-            GradientStop { position: 1.0; color: Theme.dark ? "#B3090A0C" : "#66FFFFFF" }
+            GradientStop { position: 1.0; color: Theme.wallpaperShade }
         }
         opacity: root.veil
     }
