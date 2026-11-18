@@ -184,28 +184,50 @@ def check_script_line_endings() -> None:
             error(f"{path.relative_to(ROOT).as_posix()}: UTF-8 BOM breaks shebangs and systemd units")
 
 
+REQUIRED_EXECUTABLES = ["tools/build.sh", "tools/build-arch.sh", "tools/build-iso.sh",
+                        "tools/run-qemu.sh", "tools/lint.sh", "tools/test-linux.sh",
+                        "tools/package-arch.sh", "core/tag-session/tag-session",
+                        "system/scripts/tagos-boot-marker", "tests/integration/boot-test.sh"]
+
+
 def check_executable_scripts() -> None:
-    # Files that must be executable once checked out on Linux (git mode 100755).
-    required = ["tools/build.sh", "tools/build-arch.sh", "tools/build-iso.sh",
-                "tools/run-qemu.sh", "tools/lint.sh", "tools/test-linux.sh",
-                "tools/package-arch.sh", "core/tag-session/tag-session",
-                "system/scripts/tagos-boot-marker", "tests/integration/boot-test.sh"]
+    """Scripts must arrive executable however the tree is delivered.
+
+    In a git checkout the index mode (100755) is authoritative. makepkg builds
+    from a `git archive` tarball that has no .git, where the tar mode is the
+    truth, so there the filesystem bit is checked instead. git must never be
+    consulted for a tree that is not its own repository: running `git ls-files`
+    inside a tarball extracted inside another checkout lists that outer repo and
+    every script looks untracked.
+    """
+    import os
     import subprocess
-    try:
-        out = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-s"],
-                             capture_output=True, text=True, check=True).stdout
-    except (OSError, subprocess.CalledProcessError):
-        return
+
+    in_git = (ROOT / ".git").exists()
     modes: dict[str, str] = {}
-    for line in out.splitlines():
-        meta, _, name = line.partition("\t")
-        modes[name] = meta.split()[0]
-    for name in required:
-        mode = modes.get(name)
-        if mode is None:
-            error(f"{name}: not tracked by git")
-        elif mode != "100755":
-            error(f"{name}: git mode is {mode}, expected 100755 (Linux checkout would not be executable)")
+    if in_git:
+        try:
+            out = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-s"],
+                                 capture_output=True, text=True, check=True).stdout
+        except (OSError, subprocess.CalledProcessError):
+            in_git = False
+        else:
+            for line in out.splitlines():
+                meta, _, name = line.partition("\t")
+                modes[name] = meta.split()[0]
+
+    for name in REQUIRED_EXECUTABLES:
+        path = ROOT / name
+        if not path.exists():
+            error(f"{name}: missing")
+        elif in_git:
+            mode = modes.get(name)
+            if mode is None:
+                error(f"{name}: not tracked by git")
+            elif mode != "100755":
+                error(f"{name}: git mode is {mode}, expected 100755 (Linux checkout would not be executable)")
+        elif not os.access(path, os.X_OK):
+            error(f"{name}: not executable (a packaging tarball keeps the tar mode)")
 
 
 def main() -> int:
