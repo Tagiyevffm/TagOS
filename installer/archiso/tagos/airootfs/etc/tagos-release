@@ -1,7 +1,7 @@
 NAME="TagOS"
-PRETTY_NAME="TagOS 0.1.0 (Aurora) — Live"
+PRETTY_NAME="TagOS 0.2.0 (Aurora) — Live"
 ID=tagos
 ID_LIKE=arch
-VERSION_ID=0.1.0
+VERSION_ID=0.2.0
 VERSION_CODENAME=Aurora
 HOME_URL="https://github.com/tagos/tagos"

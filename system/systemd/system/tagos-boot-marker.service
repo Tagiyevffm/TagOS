@@ -7,6 +7,8 @@ After=greetd.service
 
 [Service]
 Type=oneshot
+# Booting an ISO under TCG can take several minutes before the shell is up.
+Environment=TAGOS_BOOT_TIMEOUT=600
 RemainAfterExit=yes
 ExecStart=/usr/lib/tagos/tagos-boot-marker
 StandardOutput=journal
