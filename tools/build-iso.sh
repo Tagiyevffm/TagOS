@@ -99,6 +99,7 @@ required=(
     usr/lib/systemd/user/tag-shell.service
     usr/lib/systemd/user/tag-flow.service
     usr/lib/environment.d/90-tagos.conf
+    usr/lib/tagos/tagos-boot-marker
     etc/xdg/labwc/autostart
     etc/greetd/config.toml
 )
@@ -123,14 +124,15 @@ mkdir -p "$AIROOTFS/etc/systemd/system/multi-user.target.wants" \
 # The image identifies itself as TagOS, not Arch.
 ln -sfn /etc/tagos-release "$AIROOTFS/etc/os-release"
 
-# Enable the units the live session needs.
-for unit in greetd.service NetworkManager.service tagos-boot-marker.service \
-            systemd-timesyncd.service bluetooth.service; do
+# Upstream units (greetd, NetworkManager, ...) do not exist at staging time:
+# pacstrap installs them after the overlay is copied, so the first ISO reached a
+# text login because greetd was never enabled. They are enabled inside the
+# chroot by airootfs/root/customize_airootfs.sh; only profile-owned units can be
+# linked here.
+for unit in tagos-boot-marker.service; do
     target="$AIROOTFS/etc/systemd/system/multi-user.target.wants/$unit"
     if [[ -f "$AIROOTFS/usr/lib/systemd/system/$unit" ]]; then
         ln -sfn "/usr/lib/systemd/system/$unit" "$target"
-    else
-        echo "  unit $unit is not in the image (packages.txt may be incomplete)" >&2
     fi
 done
 
