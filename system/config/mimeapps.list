@@ -1,0 +1,11 @@
+# TagOS default handlers (installed to /etc/xdg/mimeapps.list, i.e. an
+# XDG_CONFIG_DIRS entry, so every user session picks it up).
+#
+# Firefox is the system browser: it is a real Arch package, it runs natively on
+# Wayland (MOZ_ENABLE_WAYLAND=1 is exported by tag-session) and TagOS does not
+# ship a browser engine of its own.
+[Default Applications]
+x-scheme-handler/http=firefox.desktop
+x-scheme-handler/https=firefox.desktop
+text/html=firefox.desktop
+application/xhtml+xml=firefox.desktop

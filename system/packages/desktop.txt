@@ -35,6 +35,7 @@ inter-font
 xdg-desktop-portal
 xdg-desktop-portal-wlr
 xdg-utils
+firefox
 foot
 brightnessctl
 # TagOS applications use these directly (trash, file opening, night light,

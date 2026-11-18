@@ -6,3 +6,8 @@ compile_commands.json
 *.user
 *.swp
 .DS_Store
+
+# local credentials — never commit
+github.txt
+.token
+tokens/

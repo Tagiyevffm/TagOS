@@ -68,8 +68,10 @@ provides=('tagos-desktop')
 conflicts=()
 replaces=()
 
-source=("$pkgname-$pkgver.tar.gz")
-sha256sums=('SKIP')
+# tagos.install is listed as a source so makepkg copies it into $srcdir, which is
+# where package() expects it (it is not part of the git archive tarball's root).
+source=("$pkgname-$pkgver.tar.gz" "tagos.install")
+sha256sums=('SKIP' 'SKIP')
 
 install="$pkgname.install"
 

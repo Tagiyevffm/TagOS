@@ -26,7 +26,8 @@ Item {
         const pinned = SettingsStore.pinnedApps;
         if (pinned.length > 0)
             return pinned;
-        return ["tag-files.desktop", "tag-monitor.desktop", "tag-settings.desktop", "tag-about.desktop"];
+        return ["tag-files.desktop", "firefox.desktop", "tag-monitor.desktop",
+                "tag-settings.desktop", "tag-about.desktop"];
     }
 
     /// Bumped when the catalog reloads; referenced by dockApps() so the

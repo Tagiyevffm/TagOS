@@ -139,6 +139,9 @@ if(TAGOS_INSTALL_SYSTEM)
                 themes/icons/tag-about.svg
                 themes/icons/tagos-logo.svg
             DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+    install(FILES system/config/mimeapps.list
+            DESTINATION ${TAGOS_SYSCONF_DIR}/xdg)
+
     install(DIRECTORY system/config/environment.d/
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/environment.d)
     install(DIRECTORY themes/
