@@ -129,12 +129,10 @@ ln -sfn /etc/tagos-release "$AIROOTFS/etc/os-release"
 # text login because greetd was never enabled. They are enabled inside the
 # chroot by airootfs/root/customize_airootfs.sh; only profile-owned units can be
 # linked here.
-for unit in tagos-boot-marker.service; do
-    target="$AIROOTFS/etc/systemd/system/multi-user.target.wants/$unit"
-    if [[ -f "$AIROOTFS/usr/lib/systemd/system/$unit" ]]; then
-        ln -sfn "/usr/lib/systemd/system/$unit" "$target"
-    fi
-done
+unit=tagos-boot-marker.service
+if [[ -f "$AIROOTFS/usr/lib/systemd/system/$unit" ]]; then
+    ln -sfn "/usr/lib/systemd/system/$unit"         "$AIROOTFS/etc/systemd/system/multi-user.target.wants/$unit"
+fi
 
 # zram keeps the live session comfortable inside a 3 GiB VM.
 mkdir -p "$AIROOTFS/etc/systemd/zram-generator.conf.d"

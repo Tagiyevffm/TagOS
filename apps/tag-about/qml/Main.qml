@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import TagOS.Design 1.0
 import TagOS.Flow 1.0
