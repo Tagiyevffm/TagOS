@@ -181,8 +181,40 @@ Every gap is a deliberate omission with a reason, not an undiscovered defect.
 | G6 | No installer: the live image autologs in but cannot install to disk | requires a Linux host to build and boot the ISO | E |
 | G7 | ISO never built or booted during this work | `mkarchiso` + QEMU/UEFI need Linux | E |
 | G8 | No TagTerminal | no PTY backend yet; shipping a fake terminal was rejected | 3 |
-| G9 | No `LICENSE` file in the tree | project governance decision (licence text) is the owner's; `PKGBUILD` declares `GPL-3.0-or-later` and installs the file if present | owner |
+| G9 | No `LICENSE` file in the tree | the code declares `GPL-3.0-or-later` in two places (PKGBUILD and TagAbout), but the licence decision and text belong to the project owner. Packaging now warns instead of silently skipping, and the repo check keeps the two declarations consistent. **Owner decision requested.** | owner |
 | G10 | Trash is per-user and lists only the home trash | cross-filesystem trashes are written correctly but not yet aggregated in the UI | 3 |
+
+## 5b. Validation gate (Phase A, second pass)
+
+The gate ran everything that a non-Linux host can run and found four defects that
+a Windows host hides:
+
+| # | Defect | Impact on Linux | Fix |
+| --- | --- | --- | --- |
+| V1 | every script committed as `100644` (repo initialised with `core.filemode=false`) | `run: tools/lint.sh` in CI and `tag-session` would be "Permission denied" | all ten scripts set to `100755` in the index |
+| V2 | nothing checked case-sensitive includes/imports | `#include "tag-system/procfs.h"` compiles on Windows, fails on Arch | new `repo-case-and-paths` CTest |
+| V3 | nothing checked CRLF/BOM in scripts, units, `.desktop`, `PKGBUILD` | shebang `bash^M` and BOM'd unit files fail on Linux | same test |
+| V4 | `PKGBUILD` skipped the missing `LICENSE` with `|| true` | the package would claim `GPL-3.0-or-later` and ship no licence text, silently | explicit warning + repo check that the two licence declarations agree |
+
+Executed on the gate host (Windows, so: structural validation only):
+
+* 15/15 CTest suites green, including the new case/path test over 375 files.
+* `tools/lint.sh` green including `shellcheck` 0 findings; `actionlint 1.7.12`
+  reports 0 problems for `.github/workflows/ci.yml` (schema + embedded shell).
+* All 25 `depends` and 5 `makedepends` of the PKGBUILD resolved to real packages
+  in `core`/`extra` through the archlinux.org package API.
+* The `git archive` tarball makepkg consumes: 480 entries, 989 KiB, correct
+  755/644 modes, no `build/` or `out/` leakage.
+* `package()` executed for real against a configured build tree with makepkg
+  semantics (`cd $srcdir`, `set -e`): exit 0, 219 files, `/etc/xdg/labwc`,
+  `/etc/greetd`, `wayland-sessions/tagos.desktop`, hicolor icons, both systemd
+  unit sets and `usr/share/tagos/tagos.install` all present.
+
+Still **not** executed anywhere: `makepkg` metadata generation and dependency
+installation, the `ctest` run on Arch (GCC 16 / Qt 6.12 there instead of MSVC-less
+MinGW), the CI jobs, `mkarchiso`, QEMU/UEFI boot and the installer. Those need a
+Linux host; the gate host has none (see §2), and the repository has no git remote,
+so GitHub Actions cannot be triggered from here.
 
 ## 6. What Phase A does and does not prove
 
