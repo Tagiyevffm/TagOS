@@ -8,53 +8,76 @@ evidence of Linux behaviour).
 
 ## 1. Is TagOS actually bootable?
 
-**Partially — and this is the honest answer.**
+**Yes — observed, not inferred.**
 
-* The ISO **builds** in CI: `out/tagos-2026.11.18-x86_64.iso`, produced by
-  `mkarchiso` from the profile in `installer/archiso/tagos` with 71 packages.
-* The ISO **did not boot** in the automated UEFI/QEMU test in the runs completed
-  during this session. The initramfs could not mount the live root:
-  `Failed to mount '' on real root`, because the `archiso` mkinitcpio hook was
-  missing from the image. The hook ships in `mkinitcpio-archiso`, which the live
-  package list did not include.
-* The first fix (`archiso` hook) was incomplete: the hook script ships in
-  `mkinitcpio-archiso`, not `archiso`. After installing it (commit `f844e44`) the
-  kernel boots through the initramfs and reaches the archiso medium search, then
-  stops with `ERROR: Device '<iso-uuid>' not found` — `autodetect` runs in a
-  chroot with nothing to detect, and the image only listed virtio modules.
-* Commit `f938026` adds the CD-ROM/SCSI stack (`ahci sr_mod cdrom sd_mod
-  usb-storage uas`) and a fresh ISO build was dispatched with it. That run's
-  result is *not* in this report: the boot is **unverified** until it is green.
+Run [`44420960594`](https://github.com/Tagiyevffm/TagOS/actions/runs/44420960594)
+built the ISO with `mkarchiso`, booted it under UEFI (OVMF) in QEMU with TCG
+acceleration, and read the serial console. The guest printed:
 
-So: the OS is not proven bootable yet. The build path is proven end to end; the
-boot path has been narrowed from "initramfs cannot mount root" to "initramfs
-cannot see the medium", and the fix for the latter is committed and building.
+```
+TAGOS_BOOT_WAITING timeout=600s
+TAGOS_BOOT_OK session={"component":"tag-shell","host":"archlinux",
+                       "pid":670,"platform":"wayland","version":"0.2.0"}
+TAGOS_CHECK tag-shell=running
+TAGOS_CHECK tag-files=launched
+TAGOS_CHECK firefox=launched
+TAGOS_CHECK firefox-package=installed Mozilla Firefox 160.0.1
+TAGOS_SELFTEST_DONE
+```
+
+The session was up **29 seconds** after the boot marker started waiting, and
+`platform":"wayland"` is read from the shell itself, so this proves a Wayland
+compositor, a D-Bus user session and a rendering Qt shell — not just a kernel.
+
+Artifact: `out/tagos-2026.11.18-x86_64.iso.sha256` plus
+`build/vm/boot-test.log` in the `tagos-iso` artifact of that run.
+
+Getting there took eleven ISO builds; each one exposed a distinct real defect and
+all of them are fixed on `main` (see `docs/devlog.md`). The last four were:
+
+| Symptom on the serial console | Real cause |
+| --- | --- |
+| text login, no session | greetd 1.10 exits 1 in 14 ms with `no default_session specified`; the live config only had `[initial_session]` |
+| session opens and closes in under a second | `mkarchiso` copies the overlay with `cp -a --no-preserve=mode`, so every executable CMake installed arrived as `0644` and could not be executed |
+| compositor starts, no shell | `XDG_SESSION_TYPE` was inherited as `tty` from PAM, and wlroots could not get EGL from virtio-gpu under TCG |
+| shell running 11 min, marker never fires | `ProtectSystem=strict` mounts `/run` read-only, so `--ready-file %t/tagos/ready` failed until the unit declared `RuntimeDirectory=tagos` |
 
 ## 2. Does it start a graphical desktop?
 
-**Not verified.** The session chain is implemented and reviewed, but it has never
-been observed on a running system:
+**Yes.** The chain is now observed end to end on the booted ISO:
 
 ```
-greetd (live: initial_session autologin)
-  └── /usr/bin/tag-session        exports XDG_SESSION_TYPE=wayland, QT_QPA_PLATFORM=wayland
-        └── labwc                 compositor, reads /etc/xdg/labwc/{rc.xml,autostart}
-              └── systemctl --user start tag-session.target
-                    ├── tag-flow.service    (D-Bus metrics, org.tagos.Flow1)
-                    └── tag-shell.service   (--ready-file %t/tagos/ready)
+greetd (live: initial_session autologin as tagos)
+  └── /usr/bin/tag-session        XDG_SESSION_TYPE=wayland, live media uses pixman
+        └── dbus-run-session -- labwc        compositor (WAYLAND_DISPLAY=wayland-0)
+              └── /etc/xdg/labwc/autostart   imports env, starts the user target
+                    ├── tag-flow.service     D-Bus metrics (org.tagos.Flow1)
+                    └── tag-shell.service    --ready-file %t/tagos/ready
 ```
 
-What *is* verified (Arch CI): `tag-shell` starts headless and instantiates the
-whole QML tree (`desktop-shell-smoke`), and the same binary runs from an installed
-tree using only `<exe>/../lib/qml` as its import path (`TAGOS_SMOKE_OK`).
+`tag-shell` was `active (running)` with 14 threads and its ready marker written;
+`tag-files` and `firefox` both launched against the live Wayland socket, which is
+why `TAGOS_CHECK` reports `launched` and not merely `found`.
+
+Known defect on this path, not yet fixed: `tag-flow.service` restart-loops because
+the user manager never received `DBUS_SESSION_BUS_ADDRESS`, and `tag-flowd` exits
+with status 2 instead of waiting for the bus. The autostart now imports the
+variable (commit after this run); the shell itself degrades to in-process sampling,
+which is why the desktop is usable regardless.
 
 ## 3. Does Firefox work?
 
-**Integrated, not tested.** Firefox is a real Arch package added to
-`system/packages/desktop.txt`, it is the default handler for
-`http`/`https`/`text/html` via `/etc/xdg/mimeapps.list`, it is pinned in the dock,
-and `tag-session` exports `MOZ_ENABLE_WAYLAND=1`. Launching it was never possible
-in this session: no Linux host, and the live session has not booted yet.
+**Tested on the booted ISO.** Firefox 160.0.1 is a real Arch package in
+`system/packages/desktop.txt`, it is the default handler for `http`/`https`/
+`text/html` via `/etc/xdg/mimeapps.list`, it is pinned in the dock, and
+`tag-session` exports `MOZ_ENABLE_WAYLAND=1`, so it starts as a Wayland client.
+
+On the booted image the marker reported
+`TAGOS_CHECK firefox=launched` (a `firefox` process alive on
+`WAYLAND_DISPLAY=wayland-0`) and
+`TAGOS_CHECK firefox-package=installed Mozilla Firefox 160.0.1`. What is not
+verified is page rendering inside the VM: the boot test is headless, so nobody has
+looked at a rendered page.
 
 ## 4. Can a user install it?
 
@@ -81,7 +104,8 @@ Everything in this section ran on **Arch Linux** in GitHub Actions
 | `makepkg` build + `check()` (full ctest inside the package build) | pass → `tagos 0.2.0-1-x86_64.pkg.tar.zst` |
 | Package payload inspection (binaries, QML, units, session, icons, `/etc`) | pass |
 | `mkarchiso` ISO build | pass (ISO produced) |
-| ISO UEFI boot in QEMU | **fail** — initramfs could not mount live root; fix committed, re-run pending |
+| ISO UEFI boot in QEMU (OVMF + TCG) | **pass** — `TAGOS_BOOT_OK`, Wayland session, shell, Files, Firefox |
+| Post-boot self-test on the live desktop | pass — `TAGOS_CHECK` x4, `TAGOS_SELFTEST_DONE` |
 
 Also verified on the **Windows** development host only (not proof of Linux
 behaviour): the 15 test suites, the QML smoke tests and a staged install from
@@ -89,7 +113,10 @@ which `tag-shell` runs.
 
 ## 6. Which features remain incomplete
 
-* **ISO boot** — fix committed (`mkinitcpio-archiso`), re-run pending.
+* **`tag-flow.service` on the live image** — restart-loops; `DBUS_SESSION_BUS_ADDRESS`
+  is not in the user manager environment and `tag-flowd` exits instead of retrying.
+* **Live renderer** — the live medium forces `WLR_RENDERER=pixman` because QEMU TCG
+  has no working GL for virtio-gpu. Installed systems keep the GPU path.
 * **Installer wizard** — not started (Phase E).
 * **Layer-shell panels** — panel/dock/control centre are one XDG window; the
   `*Content.qml` split makes promotion a wrapper change (Phase C).
@@ -104,11 +131,9 @@ which `tag-shell` runs.
 
 ## 7. What must happen next
 
-1. Watch the ISO build dispatched with `f844e44`; if `TAGOS_BOOT_OK` appears on
-   the serial console, the boot milestone is proven and the artifact can be
-   published.
-2. If boot still fails, read `build/vm/boot-test.log` from that run: the marker
-   service, greetd autologin and the labwc autostart are the remaining links.
+1. Fix `tag-flow.service` on the live image (bus address in the user manager) and
+   re-run the boot test so the whole desktop stack is green, not just the shell.
+2. Publish the ISO produced by run `44420960594` as a release artifact.
 3. Then the installer (Phase E), then layer-shell and the D-Bus services
    (Phases C/B in `docs/roadmap.md`).
 4. Decide the licence.
