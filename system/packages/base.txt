@@ -7,7 +7,6 @@ mkinitcpio
 systemd
 sudo
 dbus
-dracut
 btrfs-progs
 dosfstools
 e2fsprogs

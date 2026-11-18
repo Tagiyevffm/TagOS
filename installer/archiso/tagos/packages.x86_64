@@ -14,7 +14,6 @@ brightnessctl
 btrfs-progs
 dbus
 dosfstools
-dracut
 e2fsprogs
 firefox
 foot
@@ -33,6 +32,7 @@ linux
 linux-firmware
 mesa
 mkinitcpio
+mkinitcpio-archiso
 nano
 network-manager-applet
 networkmanager

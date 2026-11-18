@@ -1,6 +1,7 @@
 # Packages only the live/installation media needs (added on top of base+desktop).
 # The installed system does not get these unless they are explicitly pulled in.
 archiso
+mkinitcpio-archiso
 hwdetect
 gptfdisk
 parted
