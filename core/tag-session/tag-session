@@ -15,7 +15,10 @@ set -eu
 
 : "${XDG_CURRENT_DESKTOP:=TagOS}"
 : "${XDG_SESSION_DESKTOP:=TagOS}"
-: "${XDG_SESSION_TYPE:=wayland}"
+# greetd starts the session from a VT and PAM exports XDG_SESSION_TYPE=tty, so this
+# must be forced rather than defaulted: a Wayland session that claims to be tty
+# makes every client look for a text renderer.
+XDG_SESSION_TYPE=wayland
 : "${QT_QPA_PLATFORM:=wayland}"
 : "${QT_WAYLAND_DISABLE_WINDOWDECORATION:=1}"
 : "${MOZ_ENABLE_WAYLAND:=1}"
@@ -53,6 +56,17 @@ log "starting session: Type=${XDG_SESSION_TYPE} Desktop=${XDG_SESSION_DESKTOP}"
 
 # labwc runs the autostart file from /etc/xdg/labwc/autostart, which is what
 # starts tagos-session.target (tag-flow + tagshell) in Phase 0.
+# The compositor's own stderr is the only place a failed backend explains itself,
+# and greetd does not forward it, so it is mirrored into the session log.
+if [ -n "$TAGOS_SESSION_LOG" ]; then
+    if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-run-session >/dev/null 2>&1; then
+        dbus-run-session -- labwc "$@" 2>&1 | tee -a "$TAGOS_SESSION_LOG"
+    else
+        labwc "$@" 2>&1 | tee -a "$TAGOS_SESSION_LOG"
+    fi
+    exit 0
+fi
+
 if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-run-session >/dev/null 2>&1; then
     exec dbus-run-session -- labwc "$@"
 fi

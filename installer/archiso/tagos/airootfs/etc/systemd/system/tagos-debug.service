@@ -9,7 +9,7 @@ After=multi-user.target greetd.service tagos-boot-marker.service
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c 'sleep 120; { echo TAGOS_DEBUG_STATUS; systemctl --no-pager --lines=20 status tagos-boot-marker.service greetd.service 2>&1 | head -80; echo TAGOS_DEBUG_UNITS; systemctl --no-pager list-units --failed --no-legend 2>&1 | head -20; echo TAGOS_DEBUG_SESSION; cat /tmp/tagos-session.log 2>&1 | head -40; echo TAGOS_DEBUG_JOURNAL; journalctl -b --no-pager -o short 2>&1 | tail -150; echo TAGOS_DEBUG_END; } >/dev/ttyS0 2>&1'
+ExecStart=/bin/sh -c 'sleep 120; { echo TAGOS_DEBUG_STATUS; systemctl --no-pager --lines=20 status tagos-boot-marker.service greetd.service 2>&1 | head -80; echo TAGOS_DEBUG_UNITS; systemctl --no-pager list-units --failed --no-legend 2>&1 | head -20; echo TAGOS_DEBUG_DEVICES; ls -l /dev/dri 2>&1 | head -5; id tagos 2>&1; echo TAGOS_DEBUG_SESSION; cat /tmp/tagos-session.log 2>&1 | head -40; echo TAGOS_DEBUG_JOURNAL; journalctl -b --no-pager -o short 2>&1 | tail -150; echo TAGOS_DEBUG_END; } >/dev/ttyS0 2>&1'
 TimeoutStartSec=300
 
 [Install]
