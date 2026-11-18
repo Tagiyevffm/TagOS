@@ -26,15 +26,33 @@ filter_known_qmllint_noise() {
     '
 }
 
-# Arch installs qmllint as /usr/lib/qt6/bin/qmllint, which is not on PATH; ask
-# qtpaths where the Qt host tools live instead of hard-coding a distro prefix.
+# Arch installs qmllint as /usr/lib/qt6/bin/qmllint: the Qt tools live in a
+# libexec-style directory that is not on PATH, while /usr/bin only carries the
+# versioned wrappers (qml6, qmlscene6, ...). Ask qtpaths first, then fall back to
+# the known layouts, so no distro prefix is hard-coded.
 QMLLINT="${TAGOS_QMLLINT:-}"
 if [[ -z "$QMLLINT" ]]; then
     if command -v qmllint >/dev/null 2>&1; then
         QMLLINT="$(command -v qmllint)"
-    elif command -v qtpaths6 >/dev/null 2>&1; then
-        candidate="$(qtpaths6 --query QT_HOST_LIBEXECS 2>/dev/null)/qmllint"
-        [[ -x "$candidate" ]] && QMLLINT="$candidate"
+    else
+        candidates=()
+        if command -v qtpaths6 >/dev/null 2>&1; then
+            for key in QT_HOST_LIBEXECS QT_INSTALL_BINS QT_HOST_BINS; do
+                dir="$(qtpaths6 --query "$key" 2>/dev/null)" || continue
+                [[ -n "$dir" ]] && candidates+=("$dir/qmllint" "$dir/bin/qmllint")
+            done
+        fi
+        candidates+=(/usr/lib/qt6/bin/qmllint /usr/lib/qt6/qmllint /usr/lib64/qt6/bin/qmllint)
+        for candidate in "${candidates[@]}"; do
+            if [[ -x "$candidate" ]]; then
+                QMLLINT="$candidate"
+                break
+            fi
+        done
+        # Last resort: a shallow search under the Qt library directory.
+        if [[ -z "$QMLLINT" ]]; then
+            QMLLINT="$(find /usr/lib/qt6 /usr/lib64/qt6 -maxdepth 3 -type f -name qmllint -print -quit 2>/dev/null)"
+        fi
     fi
 fi
 if [[ -z "$QMLLINT" ]]; then
