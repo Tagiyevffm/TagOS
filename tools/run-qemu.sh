@@ -22,6 +22,7 @@ MEMORY="${TAGOS_VM_MEMORY:-3G}"
 CPUS="${TAGOS_VM_CPUS:-4}"
 DISK_SIZE="${TAGOS_VM_DISK_SIZE:-32G}"
 DISPLAY_MODE="spice"
+GPU_MODE="plain"
 BOOT_TEST=0
 BOOT_TIMEOUT="${TAGOS_BOOT_TIMEOUT:-240}"
 SERIAL_LOG=""
@@ -37,6 +38,7 @@ usage: tools/run-qemu.sh [options]
   --memory <size>      RAM (default 3G)
   --cpus <n>           vCPUs (default 4)
   --display <mode>     spice | gtk | none (default spice)
+  --gpu <mode>         plain | gl (default plain; gl needs host OpenGL)
   --serial-log <path>  write the serial console to a file
   --boot-test          headless boot; exit 0 only when TAGOS_BOOT_OK is seen
   --timeout <seconds>  boot-test timeout (default 240)
@@ -52,6 +54,7 @@ while [[ $# -gt 0 ]]; do
         --memory) MEMORY="$2"; shift 2 ;;
         --cpus) CPUS="$2"; shift 2 ;;
         --display) DISPLAY_MODE="$2"; shift 2 ;;
+        --gpu) GPU_MODE="$2"; shift 2 ;;
         --serial-log) SERIAL_LOG="$2"; shift 2 ;;
         --boot-test) BOOT_TEST=1; DISPLAY_MODE="none"; shift ;;
         --timeout) BOOT_TIMEOUT="$2"; shift 2 ;;
@@ -103,6 +106,14 @@ if [[ -z "$ISO" && ! -f "$DISK" ]]; then
     exit 1
 fi
 
+# virtio-vga-gl (virgl) needs an OpenGL-capable host display; without one QEMU
+# exits immediately. Headless boot tests and CI containers get the plain device,
+# and `--gpu gl` opts into acceleration when a real GPU is available.
+GPU_ARGS=(-device virtio-vga)
+if [[ "$GPU_MODE" == "gl" ]]; then
+    GPU_ARGS=(-device virtio-vga-gl)
+fi
+
 QEMU_ARGS=(
     -machine q35,accel=kvm:tcg
     -cpu max
@@ -110,7 +121,7 @@ QEMU_ARGS=(
     -m "$MEMORY"
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE"
     -drive if=pflash,format=raw,file="$OVMF_VARS"
-    -device virtio-vga-gl
+    "${GPU_ARGS[@]}"
     -device qemu-xhci
     -device usb-tablet
     -device intel-hda

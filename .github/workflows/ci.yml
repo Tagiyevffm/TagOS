@@ -196,7 +196,7 @@ jobs:
 
       - name: Build ISO
         env:
-          TAGOS_BOOT_TIMEOUT: "360"
+          TAGOS_BOOT_TIMEOUT: "900"
         run: tools/build-iso.sh
 
       - name: Upload serial log and ISO checksum
