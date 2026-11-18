@@ -54,6 +54,12 @@ endif()
 
 qt_standard_project_setup()
 
+# Static libraries (tagos-system, tagos-runtime) are linked into shared QML
+# modules and executables. On ELF/Mach-O that requires position-independent code;
+# the MinGW linker does not care, so this only surfaces on Linux:
+#   relocation R_X86_64_PC32 ... can not be used when making a shared object
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 option(TAGOS_BUILD_DESKTOP "Build the TagOS desktop session (shell, apps)" ON)
 option(TAGOS_BUILD_SERVICES "Build TagOS background services" ON)
 option(TAGOS_BUILD_TESTS "Build TagOS tests" ON)

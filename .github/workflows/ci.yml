@@ -117,10 +117,20 @@ jobs:
             qt6-base qt6-declarative qt6-svg qt6-tools qt6-wayland python
           # makepkg refuses to run as root, so CI builds as an unprivileged user.
           useradd -m -G wheel builder
-          echo 'builder ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/builder
           git config --system --add safe.directory '*'
 
       - uses: actions/checkout@v4
+
+      - name: Install the dependencies the PKGBUILD declares
+        run: |
+          # Installing the real runtime dependencies makes makepkg's dependency
+          # check meaningful: a typo or a removed package fails here instead of
+          # being hidden behind --nodeps.
+          source packaging/PKGBUILD
+          printf 'runtime dependencies: %s\n' "${depends[*]}"
+          pacman -S --noconfirm --needed "${depends[@]}"
+          printf 'build dependencies: %s\n' "${makedepends[*]}"
+          pacman -S --noconfirm --needed "${makedepends[@]}"
 
       - name: Build package
         run: |
