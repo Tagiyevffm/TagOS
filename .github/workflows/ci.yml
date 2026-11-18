@@ -130,7 +130,8 @@ jobs:
 
       - name: Inspect package payload
         run: |
-          pkg=$(ls out/pkg/tagos-*.pkg.tar.zst | head -1)
+          pkg=$(find out/pkg -name 'tagos-*.pkg.tar.zst' -print -quit)
+          test -n "$pkg"
           echo "package: $pkg"
           bsdtar -tf "$pkg" > /tmp/pkg-files.txt
           for required in \
@@ -146,7 +147,8 @@ jobs:
 
       - name: Verify the package installs cleanly
         run: |
-          pkg=$(ls out/pkg/tagos-*.pkg.tar.zst | head -1)
+          pkg=$(find out/pkg -name 'tagos-*.pkg.tar.zst' -print -quit)
+          test -n "$pkg"
           # Unpack the payload into a scratch root: proves the file layout is
           # valid without pulling runtime dependencies into the CI container.
           mkdir -p /tmp/pkgroot

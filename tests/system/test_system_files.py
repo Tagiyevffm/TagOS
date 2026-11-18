@@ -339,6 +339,18 @@ def check_packaging() -> None:
     if "TAGOS_SYSCONF_DIR=/etc" not in text:
         error("packaging/PKGBUILD must install system configuration into /etc")
 
+    licence = re.search(r"^license=\('([^']+)'\)", text, re.MULTILINE)
+    about = ROOT / "apps/tag-about/qml/Main.qml"
+    about_licence = re.search(r'component: qsTr\("TagOS bileşenleri"\), license: "([^"]+)"',
+                              about.read_text(encoding="utf-8")) if about.exists() else None
+    if licence and about_licence and licence.group(1) != about_licence.group(1):
+        error(f"licence mismatch: PKGBUILD says {licence.group(1)!r}, "
+              f"TagAbout says {about_licence.group(1)!r}")
+    # The LICENSE text itself is an open owner decision (docs/ARCH_LINUX_MIGRATION.md G9).
+    # Until it exists, packaging must warn rather than silently skip it.
+    if not (ROOT / "LICENSE").exists() and "LICENSE is missing" not in text:
+        error("packaging/PKGBUILD: LICENSE is absent but packaging does not warn about it")
+
     install_script = re.search(r'^install="?\$pkgname\.install"?$', text, re.MULTILINE)
     if not install_script:
         error("packaging/PKGBUILD should reference tagos.install")

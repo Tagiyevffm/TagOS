@@ -94,5 +94,13 @@ package() {
     install -Dm644 "$srcdir/tagos.install" "$pkgdir/usr/share/tagos/tagos.install"
 
     # Arch convention: licence files live in /usr/share/licenses.
-    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE" 2>/dev/null || true
+    # The project declares GPL-3.0-or-later (see apps/tag-about and `license=`
+    # above) but the LICENSE text itself is still an open owner decision, so the
+    # build warns instead of silently shipping a claim with no licence file.
+    if [[ -f LICENSE ]]; then
+        install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    else
+        printf 'WARNING: LICENSE is missing: %s declares %s but ships no licence text.
+'             "$pkgname" "${license[*]}" >&2
+    fi
 }

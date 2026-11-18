@@ -147,7 +147,8 @@ public:
     Q_INVOKABLE bool move(const QStringList &sources, const QString &destinationDir);
     Q_INVOKABLE bool rename(const QString &path, const QString &newName);
     Q_INVOKABLE bool makeDir(const QString &parentDir, const QString &name);
-    /// Moves to the freedesktop trash via gio; refuses when gio is unavailable.
+    /// Moves to the FreeDesktop trash (TagOS::Files::TrashService); the entry is
+    /// restorable and nothing is deleted permanently.
     Q_INVOKABLE bool moveToTrash(const QStringList &paths);
     /// Permanent delete. The UI must confirm before calling this.
     Q_INVOKABLE bool removePermanently(const QStringList &paths);

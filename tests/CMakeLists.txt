@@ -23,4 +23,9 @@ if(Python3_Interpreter_FOUND)
     add_test(NAME repo-system-units
              COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/system/test_system_files.py
                      ${PROJECT_SOURCE_DIR})
+    # Case-sensitivity, CRLF/BOM and executable-bit checks. A Windows host hides
+    # all three; a Linux checkout fails on them.
+    add_test(NAME repo-case-and-paths
+             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/system/test_case_and_paths.py
+                     ${PROJECT_SOURCE_DIR})
 endif()
