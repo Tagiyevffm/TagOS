@@ -16,6 +16,14 @@ for unit in greetd.service NetworkManager.service bluetooth.service \
     fi
 done
 
+# Catch a half-populated image here instead of on a black screen.
+for binary in /usr/bin/labwc /usr/bin/tag-session /usr/bin/tag-shell; do
+    if [[ ! -x "$binary" ]]; then
+        echo "customize_airootfs: $binary is missing or not executable" >&2
+        exit 1
+    fi
+done
+
 # Boot to the desktop session rather than a text login.
 systemctl set-default graphical.target
 

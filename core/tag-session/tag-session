@@ -23,9 +23,19 @@ set -eu
 export XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
 export QT_QPA_PLATFORM QT_WAYLAND_DISABLE_WINDOWDECORATION MOZ_ENABLE_WAYLAND ELECTRON_OZONE_PLATFORM_HINT
 
+# greetd swallows the session command's stderr, so on a headless boot a failing
+# session leaves no evidence at all. The log is therefore also written to a file
+# (overridable; set TAGOS_SESSION_LOG to an empty value to disable it).
+: "${TAGOS_SESSION_LOG:=/tmp/tagos-session.log}"
+
 log() {
     printf 'tag-session: %s\n' "$*" >&2
+    if [ -n "$TAGOS_SESSION_LOG" ]; then
+        printf 'tag-session: %s\n' "$*" >>"$TAGOS_SESSION_LOG" 2>/dev/null || true
+    fi
 }
+
+log "session start: user=$(id -un) uid=$(id -u) wayland=${WAYLAND_DISPLAY:-unset} runtime=${XDG_RUNTIME_DIR:-unset}"
 
 if [ ! -x "$(command -v labwc 2>/dev/null || true)" ]; then
     log "labwc is not installed; cannot start the TagOS session"
