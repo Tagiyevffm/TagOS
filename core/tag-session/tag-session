@@ -45,6 +45,15 @@ if [ ! -x "$(command -v labwc 2>/dev/null || true)" ]; then
     exit 127
 fi
 
+# The live medium boots in VMs (QEMU TCG, no virgl), where wlroots cannot get an
+# EGL surface from virtio-gpu and exits before the shell can start. The software
+# renderer works everywhere; installed systems keep the default GPU path.
+if [ -e /etc/archiso-live ] && [ -z "${WLR_RENDERER:-}" ]; then
+    WLR_RENDERER=pixman
+    export WLR_RENDERER
+    log "live medium: using the pixman renderer"
+fi
+
 # Publish the session environment to systemd --user and D-Bus activation so that
 # units started later inherit WAYLAND_DISPLAY and friends.
 if command -v dbus-update-activation-environment >/dev/null 2>&1; then

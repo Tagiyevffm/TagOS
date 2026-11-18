@@ -12,5 +12,14 @@ while [ "$i" -lt 50 ]; do
     sleep 0.2
 done
 
+{
+    printf 'autostart: WAYLAND_DISPLAY=%s
+' "${WAYLAND_DISPLAY:-unset}"
+    printf 'autostart: user manager wait=%s
+' "$i"
+} >>/tmp/tagos-session.log 2>/dev/null || true
+
 systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE QT_QPA_PLATFORM 2>/dev/null || true
-systemctl --user start tag-session.target     || { sleep 1; systemctl --user start tag-session.target; }
+systemctl --user start tag-session.target >>/tmp/tagos-session.log 2>&1     || { sleep 1; systemctl --user start tag-session.target >>/tmp/tagos-session.log 2>&1; }
+
+systemctl --user list-units --failed >>/tmp/tagos-session.log 2>&1 || true
