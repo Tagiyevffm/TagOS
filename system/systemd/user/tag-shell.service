@@ -10,6 +10,12 @@ Environment=QT_QPA_PLATFORM=wayland
 Environment=QT_QUICK_CONTROLS_STYLE=Basic
 Environment=QT_ENABLE_HIGHDPI_SCALING=1
 ExecStart=/usr/bin/tag-shell --ready-file %t/tagos/ready
+# %t/tagos is what tag-shell writes the session-ready marker into. Under
+# ProtectSystem=strict only directories declared here stay writable, and without
+# it the shell reported 'could not write ready file' and the boot marker waited
+# out its full timeout on a desktop that was actually running.
+RuntimeDirectory=tagos
+RuntimeDirectoryMode=0700
 Restart=on-failure
 RestartSec=1s
 # The shell owns a Wayland surface but still needs almost nothing from the host.

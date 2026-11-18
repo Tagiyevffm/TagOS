@@ -1,9 +1,9 @@
 #include "tag-control/SystemControl.h"
 
+#include <QPointer>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QTimer>
-#include <QPointer>
 
 #include "tag-control/ControlParsers.h"
 
@@ -14,6 +14,9 @@ bool hasTool(const QString &program)
 {
     return !QStandardPaths::findExecutable(program).isEmpty();
 }
+
+/// Upper bound for a probe. bluetoothctl waits for a daemon that may not run.
+constexpr int kProbeTimeoutMs = 3000;
 
 /// One-shot command execution; the callback is dropped if the manager is gone.
 void runProcess(const QString &program, const QStringList &args,
@@ -28,6 +31,14 @@ void runProcess(const QString &program, const QStringList &args,
     QObject::connect(process, &QProcess::errorOccurred, process, [done, guard](QProcess::ProcessError) {
         if (guard)
             done(-1, QString());
+    });
+    // Some probes (bluetoothctl with no daemon running) never exit on their own.
+    // Without a deadline every refresh adds another process that waits forever.
+    QTimer::singleShot(kProbeTimeoutMs, process, [guard, done]() {
+        if (!guard || guard->state() == QProcess::NotRunning)
+            return;
+        guard->kill();
+        done(-1, QString());
     });
     QObject::connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), process,
                      [done, guard](int code, QProcess::ExitStatus status) {
