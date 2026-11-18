@@ -1,0 +1,16 @@
+# TEMPORARY diagnostic for the live-image boot work.
+#
+# Dumps the status of the session chain and the tail of the boot journal to the
+# serial console ~2 minutes after multi-user, so a headless CI boot tells us why
+# greetd did not produce a session. Removed once the session is proven.
+[Unit]
+Description=TagOS live diagnostics dump to the serial console
+After=multi-user.target greetd.service tagos-boot-marker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'sleep 120; { echo TAGOS_DEBUG_STATUS; systemctl --no-pager --lines=20 status tagos-boot-marker.service greetd.service 2>&1 | head -80; echo TAGOS_DEBUG_UNITS; systemctl --no-pager list-units --failed --no-legend 2>&1 | head -20; echo TAGOS_DEBUG_JOURNAL; journalctl -b --no-pager -o short 2>&1 | tail -150; echo TAGOS_DEBUG_END; } >/dev/ttyS0 2>&1'
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
