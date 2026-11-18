@@ -9,7 +9,7 @@ set -euo pipefail
 # Session, networking and the boot marker the CI boot test greps for.
 for unit in greetd.service NetworkManager.service bluetooth.service \
             systemd-timesyncd.service tagos-boot-marker.service tagos-debug.service; do
-    if [[ -f "/usr/lib/systemd/system/$unit" ]]; then
+    if [[ -f "/usr/lib/systemd/system/$unit" || -f "/etc/systemd/system/$unit" ]]; then
         systemctl enable "$unit"
     else
         printf 'customize_airootfs: %s is missing from the image\n' "$unit" >&2
