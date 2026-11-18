@@ -1,0 +1,7 @@
+# ShellCheck configuration for the TagOS repository.
+#
+# SC2054 — QEMU device options are comma-separated inside one argument
+#          (`-drive file=x,if=none,id=root`); that is QEMU syntax, not a typo.
+# SC2034 — `installer/archiso/tagos/profiledef.sh` assigns variables that
+#          mkarchiso sources from the profile; nothing in that file reads them.
+disable=SC2054,SC2034

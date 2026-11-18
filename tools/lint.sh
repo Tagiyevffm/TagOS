@@ -53,7 +53,9 @@ if command -v shellcheck >/dev/null 2>&1; then
     done < <(find "$ROOT/tools" "$ROOT/tests" "$ROOT/system/scripts" "$ROOT/core/tag-session" "$ROOT/installer" \
                   -type f \( -name '*.sh' -o -name 'tag-session' -o -name 'tagos-boot-marker' \) -print0)
     if [[ ${#scripts[@]} -gt 0 ]]; then
-        shellcheck -x "${scripts[@]}" || status=1
+        # --severity=warning keeps real defects fatal while ignoring info-level
+        # noise (unfollowable system imports, ls-vs-find preferences).
+        shellcheck -x --severity=warning "${scripts[@]}" || status=1
     fi
 else
     echo "shellcheck not installed, skipping"

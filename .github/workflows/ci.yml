@@ -15,8 +15,11 @@ env:
   TAGOS_BUILD_DIR: build/ci
 
 jobs:
+  # The authoritative build. TagOS is a Linux distribution: a green run here is
+  # the only result that says the Wayland session, D-Bus services and /proc
+  # readers actually work. Windows builds stay a development convenience.
   build-and-test:
-    name: Build, unit tests, QML smoke, lint
+    name: Arch Linux — build, tests, lint, install tree
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
@@ -31,10 +34,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Configure
-        run: cmake -S . -B "$TAGOS_BUILD_DIR" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        run: |
+          cmake -S . -B "$TAGOS_BUILD_DIR" -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DTAGOS_SYSCONF_DIR=/etc
 
       - name: Build
-        run: cmake --build "$TAGOS_BUILD_DIR"
+        run: cmake --build "$TAGOS_BUILD_DIR" --parallel "$(nproc)"
 
       - name: Unit + desktop + repository tests
         env:
@@ -52,8 +59,108 @@ jobs:
         run: |
           # tag-flowd only exists when QtDBus is available; make that explicit.
           test -x "$TAGOS_BUILD_DIR/bin/tag-flowd"
-          "$TAGOS_BUILD_DIR/bin/tag-flowd" --once --json | tee /tmp/flowd.json
+          dbus-run-session -- "$TAGOS_BUILD_DIR/bin/tag-flowd" --once --json > /tmp/flowd.json
           python3 -c "import json;d=json.load(open('/tmp/flowd.json'));assert d['schema']==1;assert d['memory']['totalBytes']>0;print('flowd snapshot ok', d['cpuPercent'])"
+
+      - name: Linux test runner (tools/test-linux.sh)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_QUICK_BACKEND: software
+          TAGOS_DRY_RUN: "1"
+          TAGOS_BUILD_DIR: build/ci
+        run: tools/test-linux.sh
+
+      - name: Install tree check (DESTDIR staging)
+        run: |
+          # Proves the install rules produce what the ISO and the package expect.
+          DESTDIR="$PWD/out/stage" cmake --install "$TAGOS_BUILD_DIR" --prefix /usr
+          required="
+            usr/bin/tag-shell
+            usr/bin/tag-session
+            usr/bin/tag-files
+            usr/bin/tag-settings
+            usr/bin/tag-monitor
+            usr/bin/tag-about
+            usr/share/wayland-sessions/tagos.desktop
+            usr/share/icons/hicolor/scalable/apps/tag-files.svg
+            usr/share/applications/tag-files.desktop
+            usr/lib/systemd/user/tag-shell.service
+            usr/lib/systemd/user/tag-flow.service
+            usr/lib/systemd/user/tag-session.target
+            usr/lib/systemd/system/tagos-boot-marker.service
+            usr/lib/environment.d/90-tagos.conf
+            etc/xdg/labwc/autostart
+            etc/xdg/labwc/rc.xml
+            etc/greetd/config.toml
+          "
+          missing=0
+          for file in $required; do
+            if [ ! -e "out/stage/$file" ]; then echo "MISSING $file"; missing=$((missing+1)); fi
+          done
+          echo "installed $(find out/stage -type f | wc -l) files"
+          test "$missing" -eq 0
+          # The session entry must point at a binary that really is installed.
+          grep -q '^Exec=/usr/bin/tag-session$' out/stage/usr/share/wayland-sessions/tagos.desktop
+
+  # Packaging is part of the deliverable: the PKGBUILD must build and carry the
+  # session, units, icons and configuration, not only the binaries.
+  package-arch:
+    name: Arch package (PKGBUILD)
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    steps:
+      - name: Install packaging dependencies
+        run: |
+          pacman -Syu --noconfirm --needed git cmake ninja gcc pkgconf fakeroot \
+            qt6-base qt6-declarative qt6-svg qt6-tools qt6-wayland python
+          # makepkg refuses to run as root, so CI builds as an unprivileged user.
+          useradd -m -G wheel builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/builder
+          git config --system --add safe.directory '*'
+
+      - uses: actions/checkout@v4
+
+      - name: Build package
+        run: |
+          WORKDIR="$(pwd)"
+          chown -R builder:builder "$WORKDIR"
+          su builder -c "cd '$WORKDIR' && tools/package-arch.sh --output '$WORKDIR/out/pkg'"
+
+      - name: Inspect package payload
+        run: |
+          pkg=$(ls out/pkg/tagos-*.pkg.tar.zst | head -1)
+          echo "package: $pkg"
+          bsdtar -tf "$pkg" > /tmp/pkg-files.txt
+          for required in \
+              usr/bin/tag-shell usr/bin/tag-session \
+              usr/share/wayland-sessions/tagos.desktop \
+              usr/share/icons/hicolor/scalable/apps/tag-files.svg \
+              usr/lib/systemd/user/tag-shell.service \
+              usr/lib/systemd/user/tag-flow.service \
+              etc/xdg/labwc/autostart etc/greetd/config.toml; do
+            grep -qx "$required" /tmp/pkg-files.txt || { echo "MISSING $required"; exit 1; }
+          done
+          bsdtar -xOf "$pkg" .PKGINFO | grep -E '^depend' | head -20
+
+      - name: Verify the package installs cleanly
+        run: |
+          pkg=$(ls out/pkg/tagos-*.pkg.tar.zst | head -1)
+          # Unpack the payload into a scratch root: proves the file layout is
+          # valid without pulling runtime dependencies into the CI container.
+          mkdir -p /tmp/pkgroot
+          bsdtar -xpf "$pkg" -C /tmp/pkgroot
+          test -f /tmp/pkgroot/usr/share/wayland-sessions/tagos.desktop
+          test -f /tmp/pkgroot/etc/xdg/labwc/autostart
+          test -x /tmp/pkgroot/usr/bin/tag-session
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tagos-arch-package
+          path: |
+            out/pkg/*.pkg.tar.zst
+            out/pkg/*.sha256
 
   iso-boot:
     name: ISO build + UEFI boot test

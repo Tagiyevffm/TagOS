@@ -82,16 +82,41 @@ echo "== generating packages.x86_64 from system/packages"
 } >"$STAGE/packages.x86_64"
 
 echo "== installing TagOS into airootfs"
-DESTDIR="$STAGE/airootfs" cmake --install "$BUILD_DIR"
-
 AIROOTFS="$STAGE/airootfs"
-mkdir -p "$AIROOTFS/etc/xdg" \
-         "$AIROOTFS/etc/systemd/system/multi-user.target.wants" \
+# DESTDIR is the distro convention: binaries go to /usr, configuration to /etc,
+# all inside the image root, and nothing is written to the build host.
+DESTDIR="$AIROOTFS" cmake --install "$BUILD_DIR" --prefix /usr
+
+# Fail before mkarchiso (which takes ~10 minutes) if the payload is incomplete.
+required=(
+    usr/bin/tag-shell
+    usr/bin/tag-session
+    usr/bin/tag-files
+    usr/share/wayland-sessions/tagos.desktop
+    usr/share/icons/hicolor/scalable/apps/tag-files.svg
+    usr/lib/systemd/user/tag-shell.service
+    usr/lib/systemd/user/tag-flow.service
+    usr/lib/environment.d/90-tagos.conf
+    etc/xdg/labwc/autostart
+    etc/greetd/config.toml
+)
+missing=0
+for file in "${required[@]}"; do
+    if [[ ! -e "$AIROOTFS/$file" && ! -e "$AIROOTFS/$file.exe" ]]; then
+        echo "  MISSING $file" >&2
+        missing=$((missing + 1))
+    fi
+done
+if [[ "$missing" -gt 0 ]]; then
+    echo "TagOS payload is incomplete ($missing missing file(s)); refusing to build the ISO." >&2
+    exit 1
+fi
+echo "  payload verified (${#required[@]} files)"
+mkdir -p "$AIROOTFS/etc/systemd/system/multi-user.target.wants" \
          "$AIROOTFS/etc/systemd/system/graphical.target.wants"
 
-# labwc reads /etc/xdg/labwc; the files themselves are owned by the tagos
-# package payload in /usr/share/tagos/labwc.
-ln -sfn /usr/share/tagos/labwc "$AIROOTFS/etc/xdg/labwc"
+# labwc and greetd configuration are installed straight into /etc by the CMake
+# install rules, so no symlink indirection into /usr/share/tagos is needed.
 
 # The image identifies itself as TagOS, not Arch.
 ln -sfn /etc/tagos-release "$AIROOTFS/etc/os-release"
@@ -102,8 +127,8 @@ for unit in greetd.service NetworkManager.service tagos-boot-marker.service \
     target="$AIROOTFS/etc/systemd/system/multi-user.target.wants/$unit"
     if [[ -f "$AIROOTFS/usr/lib/systemd/system/$unit" ]]; then
         ln -sfn "/usr/lib/systemd/system/$unit" "$target"
-    elif [[ -f "$AIROOTFS/usr/lib/systemd/system/$unit" ]]; then
-        ln -sfn "/usr/lib/systemd/system/$unit" "$target"
+    else
+        echo "  unit $unit is not in the image (packages.txt may be incomplete)" >&2
     fi
 done
 

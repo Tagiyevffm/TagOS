@@ -11,6 +11,9 @@
 #   tools/run-qemu.sh --iso out/tagos.iso --boot-test
 #                                               # headless serial boot check (CI)
 set -euo pipefail
+# QEMU device options are comma-separated inside one argument
+# (-drive file=x,if=none,id=root): that is QEMU syntax, not an array separator.
+# SC2054 is disabled repository-wide in .shellcheckrc for this reason.
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 DISK="${TAGOS_DISK:-$ROOT/build/vm/tagos.qcow2}"

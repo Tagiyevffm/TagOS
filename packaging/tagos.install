@@ -1,0 +1,30 @@
+post_install() {
+    cat <<'EOF'
+TagOS session installed at /usr/share/wayland-sessions/tagos.desktop.
+
+To start it:
+  * from a display manager (greetd/tuigreet, GDM, SDDM): pick "TagOS"
+  * from a TTY:  tag-session
+
+TagOS runs entirely as your user. Nothing is enabled system-wide by this
+package; power actions go through logind/polkit at the moment you use them.
+EOF
+}
+
+post_upgrade() {
+    cat <<'EOF'
+TagOS upgraded. Log out and back in so the new shell binary and QML modules
+are picked up by the running session.
+EOF
+}
+
+pre_remove() {
+    cat <<'EOF'
+Removing the TagOS desktop package. Your settings in ~/.config/tagos and your
+files are left untouched.
+EOF
+}
+
+post_remove() {
+    :
+}

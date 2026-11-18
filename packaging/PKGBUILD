@@ -1,0 +1,98 @@
+# Maintainer: TagOS <dev@tagos.local>
+#
+# Arch package for the TagOS desktop environment (shell, applications, session,
+# system integration). The base operating system is ordinary Arch Linux: this
+# package adds TagOS on top and never replaces upstream components.
+#
+# Build from a source tarball created by tools/package-arch.sh:
+#   tools/package-arch.sh            # builds out/pkg/tagos-<ver>-<rel>-x86_64.pkg.tar.zst
+#
+# The tarball is produced with `git archive`, so the build is reproducible from a
+# commit and contains no build artefacts.
+
+pkgname=tagos
+pkgver=0.2.0
+pkgrel=1
+pkgdesc="TagOS desktop: Wayland shell, applications and session integration"
+arch=('x86_64')
+url="https://tagos.org"
+license=('GPL-3.0-or-later')
+options=('!strip')
+
+depends=(
+    # compositor + Wayland stack
+    labwc
+    qt6-base
+    qt6-declarative
+    qt6-svg
+    qt6-wayland
+    mesa
+    libinput
+    # system services TagOS integrates with (never reimplements)
+    networkmanager
+    bluez
+    bluez-utils
+    pipewire
+    wireplumber
+    alsa-utils
+    upower
+    power-profiles-daemon
+    polkit
+    glib2
+    # portals, session helpers and the pieces TagOS calls
+    xdg-desktop-portal
+    xdg-desktop-portal-wlr
+    xdg-utils
+    brightnessctl
+    gammastep
+    foot
+    # desktop typography
+    ttf-liberation
+    inter-font
+)
+
+makedepends=('cmake' 'ninja' 'gcc' 'pkgconf' 'qt6-tools')
+
+optdepends=(
+    'greetd: minimal display manager for the TagOS session'
+    'greetd-tuigreet: graphical greeter'
+    'layer-shell-qt: enable split panel/dock layer-shell surfaces'
+    'network-manager-applet: graphical connection editor'
+)
+
+provides=('tagos-desktop')
+conflicts=()
+replaces=()
+
+source=("$pkgname-$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+install="$pkgname.install"
+
+build() {
+    cd "$pkgname-$pkgver"
+    cmake -S . -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DTAGOS_SYSCONF_DIR=/etc \
+        -DTAGOS_BUILD_TESTS=ON \
+        -DTAGOS_BUILD_TOOLS=ON
+    cmake --build build
+}
+
+check() {
+    cd "$pkgname-$pkgver"
+    # Tests run headless: no seat, no compositor, no GPU required.
+    env QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software TAGOS_DRY_RUN=1 \
+        ctest --test-dir build --output-on-failure
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+    DESTDIR="$pkgdir" cmake --install build --prefix /usr
+
+    install -Dm644 "$srcdir/tagos.install" "$pkgdir/usr/share/tagos/tagos.install"
+
+    # Arch convention: licence files live in /usr/share/licenses.
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE" 2>/dev/null || true
+}
