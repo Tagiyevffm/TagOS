@@ -9,7 +9,10 @@ These are the checks a Linux boot would otherwise only reveal late:
   * labwc/greetd configuration parses and points at tag-session,
   * the archiso profile is complete and references files that exist,
   * package lists are clean and duplicate-free,
-  * every icon referenced from QML exists in themes/icons.
+  * every icon referenced from QML or from a .desktop file exists in themes/icons,
+  * the wayland-sessions entry points at tag-session and is installed,
+  * the PKGBUILD version tracks the CMake project version,
+  * the Linux tool scripts are real, non-stub bash scripts.
 
 Run standalone:  python3 tests/system/test_system_files.py .
 Exits non-zero on the first category with problems, reporting all of them.
@@ -271,6 +274,128 @@ def check_qml_icons() -> None:
         error("missing themes/wallpapers/aurora-dawn.svg")
 
 
+def desktop_entries() -> list[Path]:
+    return sorted(ROOT.glob("apps/*/data/*.desktop")) + sorted(ROOT.glob("desktop/*/data/*.desktop"))
+
+
+def parse_desktop_file(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or line.startswith("["):
+            continue
+        key, _, value = line.partition("=")
+        values[key.strip()] = value.strip()
+    return values
+
+
+def check_session_entry() -> None:
+    """The session entry is what a display manager lists; it must be correct."""
+    entry = ROOT / "system/wayland-sessions/tagos.desktop"
+    if not entry.exists():
+        error("missing system/wayland-sessions/tagos.desktop")
+        return
+
+    values = parse_desktop_file(entry)
+    if values.get("Type") != "Application":
+        error("wayland-sessions/tagos.desktop: Type must be Application")
+    if values.get("Exec") != "/usr/bin/tag-session":
+        error(
+            "wayland-sessions/tagos.desktop: Exec must be /usr/bin/tag-session "
+            f"(got {values.get('Exec')!r})"
+        )
+    if values.get("TryExec") != "/usr/bin/tag-session":
+        error("wayland-sessions/tagos.desktop: TryExec must point at tag-session")
+    if values.get("DesktopNames") != "TagOS":
+        error("wayland-sessions/tagos.desktop: DesktopNames must be TagOS")
+
+    cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    if "wayland-sessions" not in cmake:
+        error("CMakeLists.txt does not install system/wayland-sessions")
+    if "icons/hicolor" not in cmake:
+        error("CMakeLists.txt does not install hicolor application icons")
+
+
+def check_packaging() -> None:
+    pkgbuild = ROOT / "packaging/PKGBUILD"
+    if not pkgbuild.exists():
+        error("missing packaging/PKGBUILD")
+        return
+
+    text = pkgbuild.read_text(encoding="utf-8")
+    project = re.search(r"project\(\s*TagOS\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)", (ROOT / "CMakeLists.txt").read_text(encoding="utf-8"))
+    pkgver = re.search(r"^pkgver=([0-9.]+)$", text, re.MULTILINE)
+    if project and pkgver and project.group(1) != pkgver.group(1):
+        error(f"packaging/PKGBUILD pkgver {pkgver.group(1)} != CMake project version {project.group(1)}")
+
+    for key in ("pkgname=", "pkgrel=", "arch=", "license=", "depends=(", "makedepends=", "package()"):
+        if key not in text:
+            error(f"packaging/PKGBUILD: missing {key}")
+
+    for dependency in ("labwc", "qt6-base", "qt6-declarative", "networkmanager", "pipewire"):
+        if not re.search(rf"^\s*{re.escape(dependency)}\s*$", text, re.MULTILINE):
+            error(f"packaging/PKGBUILD: runtime dependency {dependency} is missing")
+
+    if "TAGOS_SYSCONF_DIR=/etc" not in text:
+        error("packaging/PKGBUILD must install system configuration into /etc")
+
+    install_script = re.search(r'^install="?\$pkgname\.install"?$', text, re.MULTILINE)
+    if not install_script:
+        error("packaging/PKGBUILD should reference tagos.install")
+    if not (ROOT / "packaging/tagos.install").exists():
+        error("missing packaging/tagos.install")
+
+
+def check_tool_scripts() -> None:
+    expected = {
+        "build.sh",
+        "build-arch.sh",
+        "build-iso.sh",
+        "run-qemu.sh",
+        "test-linux.sh",
+        "package-arch.sh",
+        "lint.sh",
+    }
+    for name in sorted(expected):
+        path = ROOT / "tools" / name
+        if not path.exists():
+            error(f"missing tools/{name}")
+            continue
+        content = path.read_text(encoding="utf-8")
+        if not content.startswith("#!/usr/bin/env bash"):
+            error(f"tools/{name}: expected a bash shebang")
+        if "set -euo pipefail" not in content:
+            error(f"tools/{name}: expected 'set -euo pipefail'")
+        if len(content.splitlines()) < 10:
+            error(f"tools/{name}: looks like a stub")
+
+
+def check_app_icons() -> None:
+    """Every .desktop Icon= must exist in themes/icons and be installed."""
+    icons = {p.stem for p in (ROOT / "themes/icons").glob("*.svg")}
+    cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    hicolor_block = cmake.split("icons/hicolor")[0].rsplit("install(FILES", 1)[-1]
+
+    for entry in desktop_entries():
+        values = parse_desktop_file(entry)
+        icon = values.get("Icon", "")
+        if not icon:
+            error(f"{entry.relative_to(ROOT)}: missing Icon=")
+            continue
+        if icon not in icons:
+            error(f"{entry.relative_to(ROOT)}: icon {icon!r} not found in themes/icons")
+        if f"{icon}.svg" not in hicolor_block:
+            error(f"{entry.relative_to(ROOT)}: icon {icon!r} is not installed into hicolor")
+        # The Desktop Entry spec allows either an absolute path or a bare
+        # command resolved through PATH. TagOS keeps the bare form so a dev or
+        # staged build (/usr/bin or <prefix>/bin) resolves the same entry.
+        command = values.get("Exec", "").split(" ")[0]
+        if not command:
+            error(f"{entry.relative_to(ROOT)}: missing Exec=")
+        elif "/" in command and not command.startswith("/usr/bin/"):
+            error(f"{entry.relative_to(ROOT)}: Exec path must stay under /usr/bin ({command!r})")
+
+
 def check_docs() -> None:
     for name in ("README.md", "docs/architecture.md", "docs/phase-0.md"):
         if not (ROOT / name).exists():
@@ -284,6 +409,10 @@ def main() -> int:
     check_archiso()
     check_packages()
     check_qml_icons()
+    check_session_entry()
+    check_packaging()
+    check_tool_scripts()
+    check_app_icons()
     check_docs()
 
     if ERRORS:
@@ -301,10 +430,12 @@ def main() -> int:
             if line.strip() and not line.startswith("#")
         ),
         "icons": len(list((ROOT / "themes/icons").glob("*.svg"))),
+        "desktop entries": len(desktop_entries()),
     }
     print(
         "tagos repository checks: OK "
-        f"({counted['units']} units, {counted['packages']} package entries, {counted['icons']} icons)"
+        f"({counted['units']} units, {counted['packages']} package entries, "
+        f"{counted['icons']} icons, {counted['desktop entries']} desktop entries)"
     )
     return 0
 

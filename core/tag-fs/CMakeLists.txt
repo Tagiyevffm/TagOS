@@ -11,6 +11,8 @@ qt_add_qml_module(tagos-fs
     SOURCES
         include/tag-fs/FileSystem.h
         src/FileSystem.cpp
+        include/tag-fs/Trash.h
+        src/Trash.cpp
 )
 
 target_include_directories(tagos-fs

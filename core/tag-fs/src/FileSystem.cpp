@@ -1,4 +1,5 @@
 #include "tag-fs/FileSystem.h"
+#include "tag-fs/Trash.h"
 
 #include <algorithm>
 
@@ -8,7 +9,6 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <QMimeDatabase>
-#include <QProcess>
 #include <QStandardPaths>
 
 namespace TagOS::Files {
@@ -532,21 +532,15 @@ bool FileOps::moveToTrash(const QStringList &paths)
     if (paths.isEmpty())
         return fail(tr("Silinecek öğe yok"));
 
-    const QString gio = QStandardPaths::findExecutable(QStringLiteral("gio"));
-    if (gio.isEmpty())
-        return fail(tr("gio bulunamadı; çöp kutusu kullanılamıyor"));
-
-    // gio trash <paths...>  (freedesktop trash spec)
-    QProcess process;
-    process.setProgram(gio);
-    process.setArguments(QStringList{QStringLiteral("trash")} + paths);
-    process.start();
-    if (!process.waitForFinished(15000))
-        return fail(tr("Çöp kutusu işlemi yanıt vermedi"));
-    if (process.exitCode() != 0) {
-        return fail(tr("Çöpe taşınamadı: %1")
-                        .arg(QString::fromUtf8(process.readAllStandardError()).trimmed()));
-    }
+    // The FreeDesktop Trash specification is implemented in TagOS::Files::Trash,
+    // so deletion never depends on an external `gio` binary being installed.
+    TrashService trash;
+    QObject::connect(&trash, &TrashService::finished, this, [this](const QString &, bool ok, const QString &message) {
+        if (!ok)
+            m_lastError = message;
+    });
+    if (!trash.moveToTrash(paths))
+        return fail(trash.lastError());
     return succeed(tr("%1 öğe çöp kutusuna taşındı").arg(paths.size()));
 }
 

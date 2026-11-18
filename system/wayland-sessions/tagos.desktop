@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=TagOS
+Comment=TagOS desktop — labwc compositor with the TagShell desktop
+Comment[tr]=TagOS masaüstü — labwc kompozitörü ve TagShell
+Exec=/usr/bin/tag-session
+TryExec=/usr/bin/tag-session
+Type=Application
+DesktopNames=TagOS
+Keywords=tagos;desktop;wayland;labwc;

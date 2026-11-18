@@ -100,6 +100,12 @@ endif()
 # Install: session, system integration, themes
 # ---------------------------------------------------------------------------
 if(TAGOS_INSTALL_SYSTEM)
+    # System configuration lives in /etc, as on any Arch system. Staged installs
+    # must use DESTDIR (the distro convention), e.g.
+    #   DESTDIR=out/stage cmake --install build --prefix /usr
+    # which routes this to out/stage/etc and never touches the host.
+    set(TAGOS_SYSCONF_DIR "/etc" CACHE PATH
+        "Absolute directory for system configuration (override with DESTDIR when staging)")
     install(PROGRAMS core/tag-session/tag-session
             DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -110,9 +116,23 @@ if(TAGOS_INSTALL_SYSTEM)
     install(PROGRAMS system/scripts/tagos-boot-marker
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/tagos)
     install(DIRECTORY system/config/labwc/
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/tagos/labwc)
+            DESTINATION ${TAGOS_SYSCONF_DIR}/xdg/labwc)
     install(DIRECTORY system/config/greetd/
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/tagos/greetd)
+            DESTINATION ${TAGOS_SYSCONF_DIR}/greetd)
+
+    # The session entry that display managers (greetd/tuigreet, GDM, SDDM) list.
+    install(FILES system/wayland-sessions/tagos.desktop
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/wayland-sessions)
+
+    # Application icons for the .desktop entries, in the standard icon theme so
+    # every launcher (not only TagShell) can resolve Icon=tag-files etc.
+    install(FILES
+                themes/icons/tag-files.svg
+                themes/icons/tag-settings.svg
+                themes/icons/tag-monitor.svg
+                themes/icons/tag-about.svg
+                themes/icons/tagos-logo.svg
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
     install(DIRECTORY system/config/environment.d/
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/environment.d)
     install(DIRECTORY themes/

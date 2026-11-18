@@ -70,3 +70,8 @@ tagos_unit_test(tst_monitors
     SOURCES tst_monitors.cpp
     LIBS tagos-system-qml
 )
+
+tagos_unit_test(tst_trash
+    SOURCES tst_trash.cpp
+    LIBS tagos-fs
+)
