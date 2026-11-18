@@ -26,10 +26,22 @@ filter_known_qmllint_noise() {
     '
 }
 
-if ! command -v qmllint >/dev/null 2>&1; then
-    echo "qmllint not found (install qt6-declarative / qt6-tools)" >&2
+# Arch installs qmllint as /usr/lib/qt6/bin/qmllint, which is not on PATH; ask
+# qtpaths where the Qt host tools live instead of hard-coding a distro prefix.
+QMLLINT="${TAGOS_QMLLINT:-}"
+if [[ -z "$QMLLINT" ]]; then
+    if command -v qmllint >/dev/null 2>&1; then
+        QMLLINT="$(command -v qmllint)"
+    elif command -v qtpaths6 >/dev/null 2>&1; then
+        candidate="$(qtpaths6 --query QT_HOST_LIBEXECS 2>/dev/null)/qmllint"
+        [[ -x "$candidate" ]] && QMLLINT="$candidate"
+    fi
+fi
+if [[ -z "$QMLLINT" ]]; then
+    echo "qmllint not found (install qt6-declarative / qt6-tools, or set TAGOS_QMLLINT)" >&2
     exit 127
 fi
+echo "   qmllint: $QMLLINT"
 
 if [[ ! -d "$QML_IMPORT_PATH" ]]; then
     echo "missing $QML_IMPORT_PATH — run tools/build.sh first" >&2
@@ -38,7 +50,7 @@ fi
 
 echo "== qmllint"
 while IFS= read -r -d '' file; do
-    output="$(qmllint -I "$QML_IMPORT_PATH" "$file" 2>&1)" || status=1
+    output="$("$QMLLINT" -I "$QML_IMPORT_PATH" "$file" 2>&1)" || status=1
     filtered="$(printf '%s\n' "$output" | filter_known_qmllint_noise)"
     if [[ -n "${filtered//[[:space:]]/}" ]]; then
         printf '%s\n' "$filtered"

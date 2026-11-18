@@ -17,7 +17,11 @@ pkgdesc="TagOS desktop: Wayland shell, applications and session integration"
 arch=('x86_64')
 url="https://tagos.org"
 license=('GPL-3.0-or-later')
-options=('!strip')
+# Binaries ship with their symbols (no strip) because TagOS is a small desktop
+# distribution and crash reports against its own shell are more valuable than the
+# few MiB saved. A separate -debug split would be redundant, so debug is off too;
+# leaving it on makes makepkg demand debugedit for a package it never emits.
+options=('!strip' '!debug')
 
 depends=(
     # compositor + Wayland stack
