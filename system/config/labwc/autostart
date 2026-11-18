@@ -3,5 +3,14 @@
 # labwc runs this once the compositor is up. TagOS starts its own systemd user
 # target instead of spawning processes directly, so every component gets
 # restart-on-failure, journal logging and a place in `systemctl --user status`.
+# The user manager may still be starting when labwc runs its autostart, so wait
+# for it instead of failing the only chance the session gets.
+i=0
+while [ "$i" -lt 50 ]; do
+    systemctl --user show-environment >/dev/null 2>&1 && break
+    i=$((i + 1))
+    sleep 0.2
+done
+
 systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE QT_QPA_PLATFORM 2>/dev/null || true
-systemctl --user start tag-session.target
+systemctl --user start tag-session.target     || { sleep 1; systemctl --user start tag-session.target; }
