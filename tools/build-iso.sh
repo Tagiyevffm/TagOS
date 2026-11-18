@@ -93,6 +93,8 @@ required=(
     usr/bin/tag-session
     usr/bin/tag-files
     usr/share/wayland-sessions/tagos.desktop
+    usr/lib/qml/TagOS/Shell/qmldir
+    usr/lib/qml/TagOS/Design/qmldir
     usr/share/icons/hicolor/scalable/apps/tag-files.svg
     usr/lib/systemd/user/tag-shell.service
     usr/lib/systemd/user/tag-flow.service

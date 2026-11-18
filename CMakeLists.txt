@@ -146,14 +146,13 @@ if(TAGOS_INSTALL_SYSTEM)
 endif()
 
 # QML modules are built into <build>/bin/TagOS/<Module> (see QT_QML_OUTPUT_DIRECTORY).
-# Install that tree into <prefix>/lib/qml, which tag-shell/tag-monitor add to
-# their import path relative to the executable, so any prefix works.
-install(CODE "
-    set(_tagos_qml_src \"${CMAKE_BINARY_DIR}/bin/TagOS\")
-    if(EXISTS \"\${_tagos_qml_src}\")
-        file(COPY \"\${_tagos_qml_src}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/qml\")
-        message(STATUS \"Installed TagOS QML modules to \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/qml/TagOS\")
-    endif()
-")
+# Installing that tree with install(DIRECTORY) lets CMake resolve DESTDIR itself;
+# a hand-built path inside install(CODE) silently ignored DESTDIR, which made
+# `makepkg` fail as an unprivileged user and polluted the live prefix as root.
+# tag-shell/apps add <prefix>/<libdir>/qml to their import path relative to the
+# executable, so any prefix works.
+install(DIRECTORY "${CMAKE_BINARY_DIR}/bin/TagOS"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/qml
+        COMPONENT Runtime)
 
 message(STATUS "TagOS ${TAGOS_DISPLAY_VERSION} | Qt ${Qt6_VERSION} | transport: ${TAGOS_FLOW_TRANSPORT}")
