@@ -17,12 +17,18 @@ evidence of Linux behaviour).
   `Failed to mount '' on real root`, because the `archiso` mkinitcpio hook was
   missing from the image. The hook ships in `mkinitcpio-archiso`, which the live
   package list did not include.
-* That defect is **fixed on `main`** (commit `f844e44`) and a fresh ISO build
-  with the fix was dispatched. Its result is *not* in this report; treat the boot
-  as **unverified** until that run is green.
+* The first fix (`archiso` hook) was incomplete: the hook script ships in
+  `mkinitcpio-archiso`, not `archiso`. After installing it (commit `f844e44`) the
+  kernel boots through the initramfs and reaches the archiso medium search, then
+  stops with `ERROR: Device '<iso-uuid>' not found` — `autodetect` runs in a
+  chroot with nothing to detect, and the image only listed virtio modules.
+* Commit `f938026` adds the CD-ROM/SCSI stack (`ahci sr_mod cdrom sd_mod
+  usb-storage uas`) and a fresh ISO build was dispatched with it. That run's
+  result is *not* in this report: the boot is **unverified** until it is green.
 
-So: the OS is not yet proven bootable. The build path is proven, the boot path is
-one committed fix away from being testable.
+So: the OS is not proven bootable yet. The build path is proven end to end; the
+boot path has been narrowed from "initramfs cannot mount root" to "initramfs
+cannot see the medium", and the fix for the latter is committed and building.
 
 ## 2. Does it start a graphical desktop?
 
@@ -126,6 +132,7 @@ which `tag-shell` runs.
 ### Commit trail (this session)
 
 ```
+f938026  Give the live initramfs the CD-ROM/SCSI stack
 f844e44  Install the archiso initcpio hook package and drop dracut
 17fc789  Keep archiso in one package list
 9f052c1  Ship the archiso package in the live image
@@ -149,6 +156,7 @@ e7b81b2  Record the Phase A validation gate results and the licence question
 * Repository: <https://github.com/Tagiyevffm/TagOS>
 * Green run (build + tests + lint + package): run `44308672855`, and every run
   after `c6281e7`.
-* ISO runs: `44307589268`, `44308672453`, `44312698574`, `44317290407` — all
-  built an ISO and all failed the boot marker; each failure produced one of the
-  commits listed above.
+* ISO runs: `44307589268`, `44308672453`, `44312698574`, `44317290407`,
+  `44322708001` — every one **built an ISO** and every one failed the boot
+  marker; each failure produced one of the commits listed above and moved the
+  failure one stage further (package list → initramfs hook → medium detection).
