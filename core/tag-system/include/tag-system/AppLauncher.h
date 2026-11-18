@@ -2,6 +2,8 @@
 
 #include <QObject>
 #include <QtQmlIntegration/qqmlintegration.h>
+
+#include "tag-common/Export.h"
 #include <QString>
 #include <QUrl>
 
@@ -13,7 +15,7 @@ namespace TagOS::System {
 /// this one object, which keeps argv handling, logging and the dry-run switch
 /// (`TAGOS_DRY_RUN=1`) in a single place. Phase 3 adds application metadata
 /// (desktop files, .desktop parsing); Phase 0 only needs "run this program".
-class AppLauncher : public QObject
+class TAGOS_EXPORT AppLauncher : public QObject
 {
     Q_OBJECT
     QML_ELEMENT

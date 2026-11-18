@@ -45,3 +45,28 @@ tagos_unit_test(tst_flow_wire
     SOURCES tst_flow_wire.cpp
     LIBS tagos-flow
 )
+
+tagos_unit_test(tst_settings_store
+    SOURCES tst_settings_store.cpp
+    LIBS tagos-config
+)
+
+tagos_unit_test(tst_desktop_entry
+    SOURCES tst_desktop_entry.cpp
+    LIBS tagos-apps
+)
+
+tagos_unit_test(tst_control_parsers
+    SOURCES tst_control_parsers.cpp
+    LIBS tagos-control
+)
+
+tagos_unit_test(tst_filesystem
+    SOURCES tst_filesystem.cpp
+    LIBS tagos-fs
+)
+
+tagos_unit_test(tst_monitors
+    SOURCES tst_monitors.cpp
+    LIBS tagos-system-qml
+)

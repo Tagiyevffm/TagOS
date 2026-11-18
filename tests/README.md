@@ -24,3 +24,14 @@ tests/integration/boot-test.sh --iso out/tagos.iso      # layer 4 (needs QEMU + 
 * A system integration file → a check in `tests/system/test_system_files.py`.
 * A boot path → extend `tests/integration/boot-test.sh` and the markers in
   `system/scripts/tagos-boot-marker`.
+
+## Phase 1 additions
+
+* `tst_settings_store` — `TagOS.Config` persistence, validation and clamping.
+* `tst_desktop_entry` — freedesktop `.desktop` parsing and field-code expansion.
+* `tst_control_parsers` — NetworkManager/BlueZ/PipeWire/UPower/rfkill output.
+* `tst_filesystem` — `TagOS.Files` model, mutations, search and previews.
+* `tst_monitors` — `/proc` process deltas, `/proc/net/dev`, thermal zones.
+
+See [../docs/testing.md](../docs/testing.md) for the full inventory and for the
+environment variables used by UI screenshots and dry-run tests.

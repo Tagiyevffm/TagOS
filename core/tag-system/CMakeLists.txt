@@ -24,7 +24,7 @@ target_include_directories(tagos-system
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/tagos>
 )
 
-target_link_libraries(tagos-system PUBLIC Qt6::Core)
+target_link_libraries(tagos-system PUBLIC Qt6::Core tagos-common)
 
 if(WIN32)
     target_sources(tagos-system PRIVATE src/SystemProbeWindows.cpp)
@@ -51,11 +51,17 @@ qt_add_qml_module(tagos-system-qml
         src/PowerManager.cpp
         include/tag-system/AppLauncher.h
         src/AppLauncher.cpp
+        include/tag-system/SessionInfo.h
+        src/SessionInfo.cpp
+        include/tag-system/Monitors.h
+        src/Monitors.cpp
 )
 # qmltyperegistrar emits `#include <PowerManager.h>`; make the public header
 # directory resolvable by bare name for the generated registration code.
 target_include_directories(tagos-system-qml PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/tag-system)
-target_link_libraries(tagos-system-qml PUBLIC tagos-system Qt6::Qml Qt6::Quick)
+target_link_libraries(tagos-system-qml PUBLIC tagos-system Qt6::Qml Qt6::Quick tagos-common)
+target_compile_definitions(tagos-system-qml PRIVATE TAGOS_VERSION="${TAGOS_VERSION}")
+target_compile_definitions(tagos-system-qml PRIVATE TAGOS_MODULE_BUILD)
 
 tagos_set_module(tagos-system-qml VERSION ${TAGOS_VERSION} COMPONENT core)
 

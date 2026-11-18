@@ -26,14 +26,21 @@ qt_add_qml_module(tagos-design
         qml/TagRingGauge.qml
         qml/TagSparkline.qml
         qml/TagSlider.qml
+        qml/TagIconButton.qml
+        qml/TagChip.qml
+        qml/TagListRow.qml
+        qml/TagEmptyState.qml
+        qml/TagMenu.qml
+        qml/TagSegmented.qml
+        qml/TagAppWindow.qml
 )
 
-target_link_libraries(tagos-design PRIVATE Qt6::Quick Qt6::Qml Qt6::Svg)
+target_link_libraries(tagos-design PRIVATE Qt6::Quick Qt6::Qml Qt6::Svg Qt6::QuickControls2)
 
 # Theme assets are compiled into the same QML module so `qrc:/qt/qml/TagOS/Design/...`
 # works identically from the build tree and from an installed image.
 set(TAGOS_THEME_DIR ${PROJECT_SOURCE_DIR}/themes)
-file(GLOB TAGOS_ICON_FILES CONFIGURE_DEPENDS ${TAGOS_THEME_DIR}/icons/*.svg)
+file(GLOB TAGOS_ICON_FILES CONFIGURE_DEPENDS ${TAGOS_THEME_DIR}/icons/*.svg ${TAGOS_THEME_DIR}/icons/light/*.svg)
 file(GLOB TAGOS_WALLPAPER_FILES CONFIGURE_DEPENDS ${TAGOS_THEME_DIR}/wallpapers/*.svg)
 
 qt_add_resources(tagos-design "tagos-design-assets"

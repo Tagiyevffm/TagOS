@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=TagFiles
+Name[tr]=TagFiles
+GenericName=File Manager
+GenericName[tr]=Dosya Yöneticisi
+Comment=Browse, preview and manage your files
+Comment[tr]=Dosyalarınıza göz atın, önizleyin ve yönetin
+Exec=tag-files %U
+Icon=tag-files
+Terminal=false
+Categories=System;FileManager;Utility;
+Keywords=files;folders;browse;copy;move;dosya;klasör;
+StartupNotify=true
+StartupWMClass=tag-files

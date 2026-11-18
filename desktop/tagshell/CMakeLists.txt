@@ -12,21 +12,26 @@ qt_add_qml_module(tag-shell
     QML_FILES
         qml/Main.qml
         qml/Wallpaper.qml
-        qml/TopBar.qml
-        qml/SideDock.qml
-        qml/BottomDock.qml
+        qml/BoardContent.qml
+        qml/TopPanelContent.qml
+        qml/DockContent.qml
         qml/Hero.qml
-        qml/LauncherOverlay.qml
-        qml/ControlCenter.qml
         qml/MonitorCard.qml
-        qml/AppCatalog.qml
+        qml/LauncherContent.qml
+        qml/ControlCenterContent.qml
+        qml/NotificationCenter.qml
+        qml/NotificationStack.qml
 )
 
 target_include_directories(tag-shell PRIVATE
     ${CMAKE_BINARY_DIR}/generated/tag-system
 )
 target_link_libraries(tag-shell PRIVATE
+    tagos-runtime
     tagos-flow
+    tagos-apps
+    tagos-control
+    tagos-config
     tagos-system-qml
     tagos-design
     Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Svg

@@ -37,3 +37,7 @@ xdg-desktop-portal-wlr
 xdg-utils
 foot
 brightnessctl
+# TagOS applications use these directly (trash, file opening, night light,
+# connection editing). They are optional at runtime: the UI disables the tile.
+glib2
+gammastep

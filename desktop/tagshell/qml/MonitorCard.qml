@@ -9,9 +9,11 @@ TagCard {
 
     width: 320
     padding: Spacing.lg
+    implicitHeight: body.implicitHeight + padding * 2
 
     Column {
-        anchors.fill: parent
+        id: body
+        width: parent.width
         spacing: Spacing.md
 
         Row {

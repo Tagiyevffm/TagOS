@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=TagOS Hakkında
+GenericName=About
+GenericName[tr]=Hakkında
+Comment=Version, kernel, hardware and licences
+Comment[tr]=Sürüm, çekirdek, donanım ve lisanslar
+Exec=tag-about
+Icon=tagos-logo
+Terminal=false
+Categories=System;Settings;
+Keywords=about;version;kernel;hardware;hakkında;sürüm;
+StartupNotify=true
+StartupWMClass=tag-about

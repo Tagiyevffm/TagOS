@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=TagMonitor
+GenericName=System Monitor
+GenericName[tr]=Sistem Monitörü
+Comment=Live CPU, memory, disk, network and processes
+Comment[tr]=Canlı CPU, bellek, disk, ağ ve süreçler
+Exec=tag-monitor
+Icon=tag-monitor
+Terminal=false
+Categories=System;Monitor;
+Keywords=monitor;cpu;memory;process;system;monitör;süreç;
+StartupNotify=true
+StartupWMClass=tag-monitor

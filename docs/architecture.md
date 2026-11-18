@@ -109,12 +109,57 @@ with unquoted strings and `AppLauncher` resolves executables through `PATH`
 before spawning, so a missing application produces a visible error instead of a
 silent no-op.
 
-## Deliberate Phase 0 limits
+## Shell surface model
 
-* The shell is one full-screen surface. Bars become `wlr-layer-shell` surfaces
-  in Phase 1 (`layer-shell-qt` is already in the package list); Phase 0 must not
-  pretend the panel can reserve screen space.
-* Network/audio/Bluetooth tiles are labelled **Faz 2** instead of being fake
-  switches — the plan is to bind them to NetworkManager/BlueZ/PipeWire.
-* Snapshot, updates and the store are Phase 4; the launcher shows them dimmed
-  with their roadmap phase.
+The shell is one frameless, full-screen `Window` ("board") that hosts the merged
+composition: wallpaper, desktop icons, clock widget, monitor card, and the
+chrome drawn on top (panel, dock, overlays). The chrome is not built into the
+window — it lives in discrete content components:
+
+```
+Main.qml (Window)
+├── BoardContent        wallpaper · desktop icons · Hero · MonitorCard · menu
+├── TopPanelContent     brand · quick launch · global search · tray · clock
+├── DockContent         launcher · pinned apps · all-apps entry · context menu
+├── LauncherContent     Ctrl+Space search, keyboard driven
+├── ControlCenterContent tiles · sliders · battery · notifications
+└── NotificationStack   toasts for real events
+```
+
+Each `*Content.qml` is an `Item` with no window assumptions, so promoting the
+panel and dock to `wlr-layer-shell` surfaces (exclusive zones, per-output
+anchors) is a change to the window wrappers only. `layer-shell-qt` is already in
+`system/packages/desktop.txt`. This is the Phase 2 step: it needs a Wayland host
+to verify that exclusive zones actually reserve space, and the Windows
+development host used for this phase cannot prove that.
+
+## Settings flow
+
+`TagOS.Config` owns one JSON document (`~/.config/tagos/settings.json`):
+
+```
+TagSettings ─┐
+TagCenter  ──┼─→ SettingsStore (singleton) ─→ 250 ms debounce ─→ QSaveFile (atomic)
+Dock menu  ──┘                 │
+                               ├─→ Theme (dark/light palette) → every component
+                               ├─→ dock size · auto-hide · panel height
+                               └─→ pinned apps · recent apps
+```
+
+A corrupt file falls back to defaults and surfaces a Turkish error string in the
+shell notification centre instead of failing to start. Values are validated on
+write (theme ∈ dark|light|auto, icon size 28–64, panel height 32–72, …) so a bad
+setting can never render an unusable desktop.
+
+## Deliberate Phase 1 limits
+
+* The shell is still **one composited surface**; see the surface model above for
+  what promotion to layer-shell requires and why it was not claimed here.
+* Positions are computed for a single output. Multi-monitor generation is a
+  wrapper change plus `Screen` iteration, deferred to a Wayland host.
+* Network/audio/Bluetooth/power tiles are backed by real CLI adapters
+  (`nmcli`, `wpctl`, `bluetoothctl`, `upower`, `powerprofilesctl`,
+  `brightnessctl`, `rfkill`, `gammastep`). When a tool is missing the tile is
+  disabled and says why — there are no decorative switches.
+* TagTerminal, the store, updates and snapshots are later phases. The launcher
+  only lists applications that actually exist on the system.

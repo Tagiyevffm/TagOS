@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=TagSettings
+GenericName=Settings
+GenericName[tr]=Ayarlar
+Comment=Configure appearance, sound, network and system
+Comment[tr]=Görünüm, ses, ağ ve sistemi yapılandırın
+Exec=tag-settings
+Icon=tag-settings
+Terminal=false
+Categories=Settings;System;
+Keywords=settings;preferences;theme;wallpaper;network;ayarlar;tema;
+StartupNotify=true
+StartupWMClass=tag-settings

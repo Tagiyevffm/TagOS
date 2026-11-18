@@ -1,27 +1,45 @@
 import QtQuick
 import TagOS.Design 1.0
 
-// Aurora wallpaper with a soft vignette so panels stay readable.
+// Desktop backdrop: theme wallpaper plus a readability veil. The wallpaper is
+// a design-system asset, so a user-set photo only changes Theme.wallpaper.
 Item {
     id: root
+
+    property real veil: 0.55
 
     Image {
         anchors.fill: parent
         source: Theme.wallpaper
         fillMode: Image.PreserveAspectCrop
         asynchronous: false
-        smooth: true
         cache: true
+        smooth: true
     }
 
-    // Bottom and top scrims: panels get contrast without dimming the artwork.
+    // Bottom-anchored gradient keeps the dock and desktop text legible on any
+    // wallpaper without hiding the artwork.
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#B3000000" }
-            GradientStop { position: 0.22; color: "#33000000" }
-            GradientStop { position: 0.62; color: "#11000000" }
-            GradientStop { position: 1.0; color: "#CC000000" }
+            GradientStop { position: 0.0; color: "transparent" }
+            GradientStop {
+                position: 0.55
+                color: Qt.rgba(0, 0, 0, Theme.dark ? 0.10 : 0.04)
+            }
+            GradientStop { position: 1.0; color: Theme.dark ? "#B3090A0C" : "#66FFFFFF" }
         }
+        opacity: root.veil
+    }
+
+    // Subtle accent glow behind the hero widget.
+    Rectangle {
+        width: parent.width * 0.45
+        height: width
+        radius: width / 2
+        x: -width * 0.2
+        y: parent.height - height * 0.75
+        color: Theme.accentSoft
+        opacity: Theme.dark ? 0.30 : 0.18
     }
 }

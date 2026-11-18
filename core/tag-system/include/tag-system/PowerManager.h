@@ -2,6 +2,8 @@
 
 #include <QObject>
 #include <QtQmlIntegration/qqmlintegration.h>
+
+#include "tag-common/Export.h"
 #include <QString>
 
 #include <memory>
@@ -16,7 +18,7 @@ class PowerManagerPrivate;
 /// `systemctl`/`loginctl`, which keeps polkit in charge of authorisation.
 /// `TAGOS_DRY_RUN=1` turns every action into a recorded no-op, which is what
 /// the automated desktop tests use.
-class PowerManager : public QObject
+class TAGOS_EXPORT PowerManager : public QObject
 {
     Q_OBJECT
     QML_ELEMENT

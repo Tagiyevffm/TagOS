@@ -45,3 +45,16 @@ function(tagos_add_test)
     add_test(NAME ${ARG_NAME} COMMAND ${ARG_NAME})
     return(PROPAGATE ARG_NAME)
 endfunction()
+
+# tagos_desktop_entry(target SOURCE)
+#
+# Installs a .desktop file for the app and copies it into the build tree so the
+# development shell's app catalog (which also scans <prefix>/share/applications)
+# lists the application without a full install step.
+function(tagos_desktop_entry target source)
+    get_filename_component(entry_name ${source} NAME)
+    configure_file(${source}
+                   ${CMAKE_BINARY_DIR}/share/applications/${entry_name}
+                   COPYONLY)
+    install(FILES ${source} DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+endfunction()

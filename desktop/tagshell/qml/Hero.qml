@@ -1,108 +1,138 @@
 import QtQuick
 import TagOS.Design 1.0
+import TagOS.Config 1.0
+import TagOS.Flow 1.0
+import TagOS.System 1.0
 
-// Centre of the board: identity + the universal launcher entry.
+// Desktop clock / greeting widget. Everything it shows is live: time, uptime,
+// CPU and memory come from TagFlow, the version from the build.
 Item {
     id: root
 
-    signal searchRequested()
+    property var flow: null
+    property string greeting: ""
+    property string dateText: ""
+
+    implicitWidth: 320
+    implicitHeight: content.implicitHeight
+    width: implicitWidth
+    height: implicitHeight
+
+    readonly property var monthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+                                       "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
+    readonly property var dayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe",
+                                     "Cuma", "Cumartesi"]
+
+    function updateClock() {
+        const now = new Date();
+        const hour = now.getHours();
+        root.greeting = hour < 6 ? qsTr("İyi geceler")
+                      : hour < 12 ? qsTr("Günaydın")
+                      : hour < 18 ? qsTr("İyi günler")
+                      : qsTr("İyi akşamlar");
+        root.dateText = root.dayNames[now.getDay()] + ", " + now.getDate() + " "
+                + root.monthNames[now.getMonth()];
+        clock.text = (SettingsStore.showSeconds
+                      ? Qt.formatDateTime(now, "HH:mm:ss")
+                      : Qt.formatDateTime(now, "HH:mm"));
+    }
+
+    Component.onCompleted: updateClock()
+
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: root.updateClock()
+    }
 
     Column {
-        anchors.centerIn: parent
-        spacing: Spacing.lg
+        id: content
+        width: parent.width
+        spacing: Spacing.xs
 
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Spacing.lg
-
-            Image {
-                anchors.verticalCenter: parent.verticalCenter
-                source: Theme.icon("tagos-logo")
-                sourceSize.width: 96
-                sourceSize.height: 88
-                width: 84
-                height: 76
-            }
-
-            Row {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 0
-
-                Text {
-                    text: "Tag"
-                    color: Theme.text
-                    font.family: Typography.family
-                    font.pixelSize: 72
-                    font.weight: Typography.bold
-                    font.letterSpacing: -2
-                }
-
-                Text {
-                    text: "OS"
-                    color: Theme.accent
-                    font.family: Typography.family
-                    font.pixelSize: 72
-                    font.weight: Typography.bold
-                    font.letterSpacing: -2
-                }
-            }
+        Text {
+            text: root.greeting
+            color: Theme.textMuted
+            font.family: Typography.family
+            font.pixelSize: Typography.subtitle
+            font.letterSpacing: 0.4
         }
 
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: Theme.tagline
+            id: clock
+            text: Qt.formatDateTime(new Date(), "HH:mm")
+            color: Theme.text
+            font.family: Typography.family
+            font.pixelSize: 68
+            font.weight: Typography.regular
+            font.letterSpacing: -2
+        }
+
+        Text {
+            text: root.dateText
             color: Theme.textDim
             font.family: Typography.family
-            font.pixelSize: Typography.subtitle
-            font.letterSpacing: 3
+            font.pixelSize: Typography.body
         }
 
         Item { width: 1; height: Spacing.sm }
 
-        Rectangle {
-            id: searchField
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: 430
-            height: 44
-            radius: Radius.pill
-            color: Theme.bgElevated
-            border.width: 1
-            border.color: area.containsMouse ? Theme.accent : Theme.border
+        Row {
+            spacing: Spacing.sm
 
-            Behavior on border.color { ColorAnimation { duration: Motion.fast } }
+            Rectangle {
+                height: 24
+                width: versionRow.implicitWidth + Spacing.md * 2
+                radius: Radius.pill
+                color: Theme.accentSoft
+                border.width: 1
+                border.color: Theme.accent
 
-            Row {
-                anchors.left: parent.left
-                anchors.leftMargin: Spacing.lg
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Spacing.md
+                Row {
+                    id: versionRow
+                    anchors.centerIn: parent
+                    spacing: Spacing.xs
 
-                TagIcon { name: "search"; size: 17; dim: 0.85; anchors.verticalCenter: parent.verticalCenter }
+                    TagIcon { anchors.verticalCenter: parent.verticalCenter; name: "tagos-logo"; size: 13 }
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Her şeyi ara…")
-                    color: Theme.textMuted
-                    font.family: Typography.family
-                    font.pixelSize: Typography.body
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "TagOS " + Theme.version + " · " + Theme.codename
+                        color: Theme.text
+                        font.family: Typography.family
+                        font.pixelSize: Typography.caption
+                        font.weight: Typography.medium
+                    }
                 }
             }
 
-            MouseArea {
-                id: area
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.searchRequested()
-            }
-        }
+            Rectangle {
+                height: 24
+                width: uptimeRow.implicitWidth + Spacing.md * 2
+                radius: Radius.pill
+                color: Theme.surfaceAlt
+                border.width: 1
+                border.color: Theme.border
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("Dream. Code. Create.  ·  TagOS %1 (%2)").arg(Theme.version).arg(Theme.codename)
-            color: Theme.textMuted
-            font.family: Typography.family
-            font.pixelSize: Typography.caption
+                Row {
+                    id: uptimeRow
+                    anchors.centerIn: parent
+                    spacing: Spacing.xs
+
+                    TagIcon { anchors.verticalCenter: parent.verticalCenter; name: "clock"; size: 13; opacity: 0.7 }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.flow && root.flow.valid
+                              ? qsTr("%1 açık").arg(root.flow.uptimeText)
+                              : qsTr("Ölçüm yok")
+                        color: Theme.textDim
+                        font.family: Typography.family
+                        font.pixelSize: Typography.caption
+                    }
+                }
+            }
         }
     }
 }

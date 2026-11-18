@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(TagOS
-    VERSION 0.1.0
+    VERSION 0.2.0
     DESCRIPTION "TagOS — a modular Linux desktop distribution"
     LANGUAGES CXX
 )
@@ -70,13 +70,22 @@ configure_file(
 # ---------------------------------------------------------------------------
 # Modules
 # ---------------------------------------------------------------------------
+add_subdirectory(core/tag-common)
+add_subdirectory(core/tag-config)
 add_subdirectory(core/tag-system)
+add_subdirectory(core/tag-runtime)
+add_subdirectory(core/tag-apps)
+add_subdirectory(core/tag-fs)
+add_subdirectory(core/tag-control)
 add_subdirectory(core/tagflow)
 
 if(TAGOS_BUILD_DESKTOP)
     add_subdirectory(desktop/tag-design)
     add_subdirectory(desktop/tagshell)
-    add_subdirectory(apps/tag-monitor)
+    add_subdirectory(apps/tag-about)
+add_subdirectory(apps/tag-files)
+add_subdirectory(apps/tag-monitor)
+add_subdirectory(apps/tag-settings)
 endif()
 
 # ---------------------------------------------------------------------------

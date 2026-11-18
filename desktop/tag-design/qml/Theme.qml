@@ -1,46 +1,68 @@
 pragma Singleton
 import QtQuick
+import TagOS.Config 1.0
 
-// TagOS colour + identity tokens ("Aurora" palette).
+// TagOS design tokens — "Aurora" palette, dark and light.
 //
-// Flat properties on purpose: qmllint and qmltc can introspect them, and every
-// surface reads the same values. Components must never hardcode a colour.
+// Every surface reads colours from here; nothing hardcodes a hex value. The
+// active palette follows SettingsStore (dark / light / auto), so changing the
+// theme in TagSettings or TagCenter repaints the entire desktop through normal
+// QML bindings — no restart, no manual re-theming.
 QtObject {
-    // surfaces
-    readonly property color bg: "#0E0B09"
-    readonly property color bgElevated: "#14100E"
-    readonly property color surface: "#1B1512"
-    readonly property color surfaceAlt: "#221A16"
-    readonly property color surfaceHover: "#2B211B"
-    readonly property color border: "#332A24"
-    readonly property color borderStrong: "#4A3D33"
-    readonly property color shadow: "#B3000000"
+    id: theme
 
-    // accent
-    readonly property color accent: "#F5931F"
-    readonly property color accentHover: "#FFA93C"
-    readonly property color accentPressed: "#D97C12"
-    readonly property color accentSoft: "#26F5931F"
-    readonly property color accentInk: "#161009"
+    readonly property bool dark: SettingsStore.darkMode
+    readonly property string modeName: dark ? "dark" : "light"
 
-    // text
-    readonly property color text: "#F6EFE8"
-    readonly property color textDim: "#A99C93"
-    readonly property color textMuted: "#6E635C"
+    // --- surfaces ---------------------------------------------------------
+    readonly property color bg: dark ? "#090A0C" : "#F4F5F7"
+    readonly property color bgElevated: dark ? "#0F1115" : "#FFFFFF"
+    readonly property color surface: dark ? "#111318" : "#FFFFFF"
+    readonly property color card: dark ? "#17191F" : "#FFFFFF"
+    readonly property color surfaceAlt: dark ? "#1C1F26" : "#F0F1F4"
+    readonly property color surfaceHover: dark ? "#23272F" : "#E8EAF0"
+    readonly property color overlay: dark ? "#CC090A0C" : "#B3F4F5F7"
+    readonly property color border: dark ? "#24272F" : "#E1E4EA"
+    readonly property color borderStrong: dark ? "#343944" : "#C7CBD4"
+    readonly property color shadow: dark ? "#99000000" : "#1F1A1D24"
 
-    // status
-    readonly property color success: "#3FBF7F"
-    readonly property color warning: "#F5C542"
-    readonly property color danger: "#E5484D"
-    readonly property color info: "#5B8DEF"
+    // --- accent -----------------------------------------------------------
+    readonly property color accent: dark ? "#FF9D24" : "#F08A0E"
+    readonly property color accentHover: dark ? "#FFB04D" : "#FF9D24"
+    readonly property color accentPressed: dark ? "#E3851A" : "#C97400"
+    readonly property color accentSoft: dark ? "#26FF9D24" : "#1AF08A0E"
+    readonly property color accentInk: "#15100A"
+    readonly property color secondary: dark ? "#F5B84B" : "#B4690A"
 
-    // identity
-    readonly property string version: "0.1.0"
+    // --- text -------------------------------------------------------------
+    readonly property color text: dark ? "#F4F4F5" : "#14161B"
+    readonly property color textDim: dark ? "#C3C5CC" : "#3F444E"
+    readonly property color textMuted: dark ? "#92949D" : "#6B7280"
+
+    // --- status -----------------------------------------------------------
+    readonly property color success: dark ? "#4ADE80" : "#15803D"
+    readonly property color warning: dark ? "#F5B84B" : "#B45309"
+    readonly property color danger: dark ? "#F2555A" : "#C0292E"
+    readonly property color info: dark ? "#5B9DFF" : "#1D4ED8"
+
+    // --- identity ---------------------------------------------------------
+    readonly property string version: "0.2.0"
     readonly property string codename: "Aurora"
     readonly property string tagline: qsTr("Dream. Code. Create.")
-    readonly property string wallpaper: "qrc:/qt/qml/TagOS/Design/wallpapers/aurora-dawn.svg"
+    readonly property string defaultWallpaperDark: "qrc:/qt/qml/TagOS/Design/wallpapers/aurora-dawn.svg"
+    readonly property string defaultWallpaperLight: "qrc:/qt/qml/TagOS/Design/wallpapers/aurora-day.svg"
+    readonly property string wallpaper: SettingsStore.wallpaper.length > 0
+                                        ? SettingsStore.wallpaper
+                                        : (dark ? defaultWallpaperDark : defaultWallpaperLight)
 
+    /// Icon URL for the active theme (icons ship as static dark/light sets).
     function icon(name) {
-        return "qrc:/qt/qml/TagOS/Design/icons/" + name + ".svg";
+        const set = dark ? "icons" : "icons/light";
+        return "qrc:/qt/qml/TagOS/Design/" + set + "/" + name + ".svg";
+    }
+
+    /// Shared easing/duration helpers so every component animates identically.
+    function duration(ms) {
+        return SettingsStore.reducedMotion ? 0 : ms;
     }
 }

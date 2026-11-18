@@ -31,25 +31,37 @@ the compositor is TagOS code.
 *Rendered by `tag-shell --screenshot` from this tree: the real board, top bar,
 docks and live TagMonitor card (`cpu`/`RAM`/`disk` read from `tagos-metrics`).*
 
-## Status: Phase 0 — Foundation (v0.1.0 «Aurora»)
+## Status: Phase 1 — Desktop (v0.2.0 «Aurora»)
+
+Phase 0 proved the foundation boots. Phase 1 built the desktop on top of it:
+a themed shell with a launcher, control centre and notifications, a settings
+store that every surface reads, and four applications that operate on real
+system state.
 
 | Deliverable | State |
 | --- | --- |
-| Modular monorepo (CMake, Qt 6, C++20) | done |
-| `tag-system` metrics/probe library (procfs, testable with fixtures) | done |
-| `tag-flow` IPC layer + `tag-flowd` D-Bus service | done (D-Bus backend builds on Linux) |
-| `TagOS.Design` design system (tokens + components + icons + wallpaper) | done |
-| `tag-shell` desktop board (top bar, docks, launcher, TagCenter) | done |
-| `TagMonitor` second application reusing the same modules | done |
-| systemd user session (`tag-session.target`, `tag-flow`, `tag-shell`) | done |
-| labwc + greetd session configuration and sandboxing | done |
-| archiso live/installation profile + boot marker | done |
-| QEMU UEFI runner (3 GiB / 4 vCPU / 32 GiB / 1280×800) | done |
-| Automated tests: unit, QML smoke, repository checks, QEMU boot | done |
+| Modular monorepo (CMake, Qt 6, C++20, 20 modules) | done |
+| `TagOS.Design` — dark/light palettes, 11 components, 78 icons | done |
+| `tag-shell` — board, top panel, dock, launcher, control centre, toasts | done |
+| `TagOS.Config` — persisted, validated, atomic settings store | done |
+| `TagOS.Apps` — XDG desktop-entry catalog and launching | done |
+| `TagOS.Control` — NetworkManager/BlueZ/PipeWire/UPower/power-profiles/rfkill | done, honest when a service is absent |
+| `TagOS.Files` — directory model, mutations, search, previews | done |
+| `TagFiles`, `TagSettings`, `TagMonitor`, `TagAbout` | done |
+| `tag-flow` + `tag-flowd` D-Bus metrics service | done (Phase 0) |
+| systemd session, labwc/greetd config, archiso profile, boot marker | done (Phase 0) |
+| Automated tests (13 CTest targets) | 13/13 green on the dev host |
 
-Phase 0 is a *working foundation*, verified by tests — not a finished desktop.
-See [docs/phase-0.md](docs/phase-0.md) for the exact acceptance criteria and how
-each one is checked, and [docs/roadmap.md](docs/roadmap.md) for phases 1–7.
+![TagOS desktop, dark theme](docs/images/board-dark.png)
+*Dark board: real applications in dock and desktop, live TagMonitor card.*
+
+![TagFiles](docs/images/files.png)
+*TagFiles browsing the real home directory.*
+
+See [docs/phase-1.md](docs/phase-1.md) for the acceptance table and the list of
+what is deliberately **not** claimed (layer-shell surfaces, multi-monitor,
+live Wi-Fi on a non-Linux host), [docs/phase-0.md](docs/phase-0.md) for the
+foundation and [docs/roadmap.md](docs/roadmap.md) for phases 2–7.
 
 ## Quick start
 

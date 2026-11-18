@@ -14,6 +14,7 @@ qt_add_qml_module(tag-monitor
 )
 
 target_link_libraries(tag-monitor PRIVATE
+    tagos-runtime
     tagos-flow
     tagos-system-qml
     tagos-design
@@ -23,3 +24,5 @@ target_link_libraries(tag-monitor PRIVATE
 set_target_properties(tag-monitor PROPERTIES WIN32_EXECUTABLE FALSE)
 tagos_set_module(tag-monitor VERSION ${TAGOS_VERSION} COMPONENT apps)
 install(TARGETS tag-monitor RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+tagos_desktop_entry(tag-monitor ${CMAKE_CURRENT_SOURCE_DIR}/data/tag-monitor.desktop)
