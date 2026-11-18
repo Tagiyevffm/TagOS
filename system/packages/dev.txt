@@ -11,6 +11,5 @@ python
 jq
 qemu-full
 edk2-ovmf
-archiso
 squashfs-tools
 libisoburn
