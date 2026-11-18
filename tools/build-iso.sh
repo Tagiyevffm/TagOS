@@ -87,6 +87,11 @@ AIROOTFS="$STAGE/airootfs"
 # all inside the image root, and nothing is written to the build host.
 DESTDIR="$AIROOTFS" cmake --install "$BUILD_DIR" --prefix /usr
 
+# mkarchiso copies the overlay with cp -a --no-preserve=mode, which drops the exec
+# bit from everything cmake installed, so restore it on the staged payload as well
+# as in customize_airootfs.sh (which runs inside the final image).
+find "$AIROOTFS/usr/bin" "$AIROOTFS/usr/lib/tagos" -maxdepth 1 -type f -exec chmod 0755 {} +
+
 # Fail before mkarchiso (which takes ~10 minutes) if the payload is incomplete.
 required=(
     usr/bin/tag-shell

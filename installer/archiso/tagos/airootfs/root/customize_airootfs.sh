@@ -16,10 +16,19 @@ for unit in greetd.service NetworkManager.service bluetooth.service \
     fi
 done
 
+# archiso copies the profile overlay with cp -a --no-preserve=mode, so the
+# executables that cmake installed into the airootfs arrive without their exec bit.
+# That is why greetd's session command could never run: the file was there, the
+# mode was not. Restore it here, inside the chroot, before anything uses it.
+for binary in /usr/bin/tag-* /usr/lib/tagos/tagos-boot-marker; do
+    [[ -f "$binary" ]] && chmod 0755 "$binary"
+done
+
 # Catch a half-populated image here instead of on a black screen.
 for binary in /usr/bin/labwc /usr/bin/tag-session /usr/bin/tag-shell; do
     if [[ ! -x "$binary" ]]; then
         echo "customize_airootfs: $binary is missing or not executable" >&2
+        ls -l "$binary" >&2 2>&1 || true
         exit 1
     fi
 done
