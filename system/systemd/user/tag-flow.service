@@ -7,6 +7,10 @@ Requires=dbus.socket
 
 [Service]
 Type=simple
+# dbus.socket is started with the session, but the user manager does not export
+# its address, so tag-flowd reported 'session bus unavailable' and exited. The
+# address is the standard socket-activated one.
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus
 ExecStart=/usr/bin/tag-flowd --interval 1500
 Restart=on-failure
 RestartSec=2s
