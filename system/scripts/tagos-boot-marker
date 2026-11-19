@@ -84,10 +84,22 @@ if pgrep -x tag-shell >/dev/null 2>&1; then
 else
     emit "TAGOS_CHECK tag-shell=missing"
 fi
+# Reporting the *state* of the user unit, not just its absence, means a failing
+# service explains itself in the boot log instead of needing another build with a
+# diagnostic unit bolted on.
+user_unit_state() {
+    uid=$(id -u tagos 2>/dev/null) || { echo unknown; return; }
+    runtime="/run/user/$uid"
+    [ -d "$runtime" ] || { echo no-runtime-dir; return; }
+    setpriv --reuid="$uid" --regid="$(id -g tagos)" --init-groups         env -i HOME=/home/tagos XDG_RUNTIME_DIR="$runtime" PATH=/usr/local/bin:/usr/bin:/bin         systemctl --user is-active "$1" 2>/dev/null | head -1
+}
+
 if pgrep -x tag-flowd >/dev/null 2>&1; then
     emit "TAGOS_CHECK tag-flowd=running"
 else
-    emit "TAGOS_CHECK tag-flowd=missing"
+    state=$(user_unit_state tag-flow.service)
+    detail=$(journalctl -t tag-flowd -n 1 -o cat 2>/dev/null | head -1)
+    emit "TAGOS_CHECK tag-flowd=missing state=${state:-unknown} log=${detail:-none}"
 fi
 
 launch_check tag-files
