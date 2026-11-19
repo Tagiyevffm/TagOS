@@ -10,27 +10,30 @@ evidence of Linux behaviour).
 
 **Yes — observed, not inferred.**
 
-Run [`44420960594`](https://github.com/Tagiyevffm/TagOS/actions/runs/44420960594)
+Run [`44440313187`](https://github.com/Tagiyevffm/TagOS/actions/runs/44440313187)
 built the ISO with `mkarchiso`, booted it under UEFI (OVMF) in QEMU with TCG
 acceleration, and read the serial console. The guest printed:
 
 ```
 TAGOS_BOOT_WAITING timeout=600s
 TAGOS_BOOT_OK session={"component":"tag-shell","host":"archlinux",
-                       "pid":670,"platform":"wayland","version":"0.2.0"}
+                       "pid":673,"platform":"wayland","version":"0.2.0"}
 TAGOS_CHECK tag-shell=running
+TAGOS_CHECK tag-flowd=running
 TAGOS_CHECK tag-files=launched
 TAGOS_CHECK firefox=launched
 TAGOS_CHECK firefox-package=installed Mozilla Firefox 160.0.1
 TAGOS_SELFTEST_DONE
 ```
 
-The session was up **29 seconds** after the boot marker started waiting, and
+The session was up **36 seconds** after the boot marker started waiting, and
 `platform":"wayland"` is read from the shell itself, so this proves a Wayland
 compositor, a D-Bus user session and a rendering Qt shell — not just a kernel.
 
-Artifact: `out/tagos-2026.11.18-x86_64.iso.sha256` plus
-`build/vm/boot-test.log` in the `tagos-iso` artifact of that run.
+Artifact: `out/tagos-2026.11.19-x86_64.iso`
+(`sha256 6bba64705adbcff64902c2146fb01df68f31f47288109e1ca7da25778b45e304`) plus
+`build/vm/boot-test.log` in the `tagos-iso` artifact of that run. All five
+post-boot checks pass, including the metrics daemon on the session bus.
 
 Getting there took eleven ISO builds; each one exposed a distinct real defect and
 all of them are fixed on `main` (see `docs/devlog.md`). The last four were:
@@ -59,11 +62,12 @@ greetd (live: initial_session autologin as tagos)
 `tag-files` and `firefox` both launched against the live Wayland socket, which is
 why `TAGOS_CHECK` reports `launched` and not merely `found`.
 
-Known defect on this path, not yet fixed: `tag-flow.service` restart-loops because
-the user manager never received `DBUS_SESSION_BUS_ADDRESS`, and `tag-flowd` exits
-with status 2 instead of waiting for the bus. The autostart now imports the
-variable (commit after this run); the shell itself degrades to in-process sampling,
-which is why the desktop is usable regardless.
+`tag-flowd` runs as well, but not because the bus was fixed: the daemon used to
+exit with status 2 when the session bus was missing, which put it in a restart loop
+(`state=activating` in the boot log). It now retries the export every two seconds
+and stays alive, so `TAGOS_CHECK tag-flowd=running` proves the process, not the
+D-Bus name. Whether it wins the race against the session bus on the live image is
+still open — the boot log carries its last message for exactly that reason.
 
 ## 3. Does Firefox work?
 
@@ -113,8 +117,10 @@ which `tag-shell` runs.
 
 ## 6. Which features remain incomplete
 
-* **`tag-flow.service` on the live image** — restart-loops; `DBUS_SESSION_BUS_ADDRESS`
-  is not in the user manager environment and `tag-flowd` exits instead of retrying.
+* **`tag-flowd` on the live image** — the process is now stable, but the session bus
+  address is still not reaching the user manager on the live image, so the D-Bus
+  name `org.tagos.Flow` may not be owned. The shell falls back to in-process
+  sampling, which is why the desktop is unaffected.
 * **Live renderer** — the live medium forces `WLR_RENDERER=pixman` because QEMU TCG
   has no working GL for virtio-gpu. Installed systems keep the GPU path.
 * **Installer wizard** — not started (Phase E).
@@ -131,9 +137,10 @@ which `tag-shell` runs.
 
 ## 7. What must happen next
 
-1. Fix `tag-flow.service` on the live image (bus address in the user manager) and
-   re-run the boot test so the whole desktop stack is green, not just the shell.
-2. Publish the ISO produced by run `44420960594` as a release artifact.
+1. Get `DBUS_SESSION_BUS_ADDRESS` into the user manager on the live image so
+   `org.tagos.Flow` is actually owned; the boot log already reports the daemon's
+   last line for this.
+2. Publish the ISO produced by run `44440313187` as a release artifact.
 3. Then the installer (Phase E), then layer-shell and the D-Bus services
    (Phases C/B in `docs/roadmap.md`).
 4. Decide the licence.
