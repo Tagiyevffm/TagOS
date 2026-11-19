@@ -69,25 +69,40 @@ int main(int argc, char *argv[])
     const int intervalMs = qMax(200, parser.value(intervalOption).toInt(&intervalOk));
 
     Flow::FlowService service;
-    QDBusConnection bus = QDBusConnection::sessionBus();
-    if (!bus.isConnected()) {
-        QTextStream(stderr) << "tag-flowd: session bus unavailable, exporting in-process only\n";
-        return 2;
-    }
 
-    if (!bus.registerService(QString::fromLatin1(kServiceName))) {
-        QTextStream(stderr) << "tag-flowd: could not own " << kServiceName << ": "
-                            << bus.lastError().message() << '\n';
-        return 3;
-    }
+    // The session bus may not exist yet when the unit starts (the desktop session
+    // creates it), so the daemon waits for it instead of exiting: a service that
+    // dies in a restart loop is worse than one that becomes visible a moment later.
+    QTimer attach;
+    attach.setInterval(2000);
+    const auto tryAttach = [&]() {
+        QDBusConnection bus = QDBusConnection::sessionBus();
+        if (!bus.isConnected())
+            return;
+        if (!bus.registerService(QString::fromLatin1(kServiceName))) {
+            QTextStream(stderr) << "tag-flowd: could not own " << kServiceName << ": "
+                                << bus.lastError().message() << '\n';
+            return;
+        }
+        if (!bus.registerObject(QString::fromLatin1(kObjectPath),
+                                &service,
+                                QDBusConnection::ExportAllSlots
+                                    | QDBusConnection::ExportAllProperties
+                                    | QDBusConnection::ExportAllSignals)) {
+            QTextStream(stderr) << "tag-flowd: could not export " << kObjectPath << '\n';
+            return;
+        }
+        QTextStream(stdout) << "tag-flowd: exported " << kServiceName << " on the session bus"
+                            << '\n';
+        attach.stop();
+    };
+    QObject::connect(&attach, &QTimer::timeout, &service, tryAttach);
 
-    if (!bus.registerObject(QString::fromLatin1(kObjectPath),
-                            &service,
-                            QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties
-                                | QDBusConnection::ExportAllSignals)) {
-        QTextStream(stderr) << "tag-flowd: could not export " << kObjectPath << '\n';
-        return 4;
-    }
+    if (!QDBusConnection::sessionBus().isConnected())
+        QTextStream(stderr) << "tag-flowd: session bus not available yet, will retry" << '\n';
+    tryAttach();
+    if (!QDBusConnection::sessionBus().isConnected())
+        attach.start();
 
     QTimer timer;
     timer.setInterval(intervalMs);
