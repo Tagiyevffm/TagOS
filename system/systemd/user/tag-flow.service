@@ -7,16 +7,14 @@ Requires=dbus.socket
 
 [Service]
 Type=simple
-# dbus.socket is started with the session, but the user manager does not export
-# its address, so tag-flowd reported 'session bus unavailable' and exited. The
-# address is the standard socket-activated one.
-Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus
 ExecStart=/usr/bin/tag-flowd --interval 1500
 Restart=on-failure
 RestartSec=2s
 # A metrics reader needs no privileges at all.
 NoNewPrivileges=yes
-PrivateTmp=yes
+# No PrivateTmp: the session bus is started by dbus-run-session in tag-session and
+# its socket lives in a private tmp directory, which is exactly what a private /tmp
+# hides. With it the daemon only ever reported 'session bus unavailable'.
 PrivateDevices=yes
 ProtectSystem=strict
 ProtectHome=yes
