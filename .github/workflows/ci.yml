@@ -223,11 +223,17 @@ jobs:
           TAGOS_BOOT_TIMEOUT: "900"
         run: tools/build-iso.sh
 
-      - name: Upload serial log and ISO checksum
+      - name: Upload serial log, ISO checksum and the ISO image
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tagos-iso
+          # The image itself is included: without it the only copy of a bootable
+          # TagOS ISO existed inside an ephemeral runner and disappeared with it.
+          # compression-level 0 keeps the upload from re-compressing 2 GB of
+          # squashfs that is already compressed.
+          compression-level: 0
           path: |
+            out/*.iso
             out/*.iso.sha256
             build/vm/boot-test.log
